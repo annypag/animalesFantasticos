@@ -46,7 +46,7 @@
 
 ## 🗺️ Diagrama de Flujo y Navegación
 
-![alt text](image-1.png)
+![MVP](public/MVP.png)
 
 1. **Home:** Mapa interactivo con pines.
 
