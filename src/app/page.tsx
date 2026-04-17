@@ -185,7 +185,7 @@ export default function Home() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/nuevoReporte"
               className="hidden rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 sm:inline-flex"
             >
               Reportar Pérdida
