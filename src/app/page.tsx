@@ -36,20 +36,9 @@ const Circle = dynamic(
   { ssr: false },
 );
 
-interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  breed: string;
-  image: string;
-  distance: string;
-  lastSeen: string;
-  location: string;
-  coordinates: [number, number];
-  description: string;
-}
+import type { Mascota } from "../types/indexMascota";
 
-const mockPets: Pet[] = [
+const mockPets: Mascota[] = [
   {
     id: "1",
     name: "Max",
@@ -137,7 +126,7 @@ const mockPets: Pet[] = [
 ];
 
 export default function Home() {
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [selectedPet, setSelectedPet] = useState<Mascota | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -161,12 +150,12 @@ export default function Home() {
 
   const filteredPets = useMemo(() => mockPets, []);
 
-  const handlePetSelect = (pet: Pet) => {
+  const handlePetSelect = (pet: Mascota) => {
     setSelectedPet(pet);
     setModalOpen(true);
   };
 
-  const handleMarkerClick = (pet: Pet) => {
+  const handleMarkerClick = (pet: Mascota) => {
     setSelectedPet(pet);
   };
 
