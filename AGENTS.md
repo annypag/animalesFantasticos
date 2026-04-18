@@ -5,8 +5,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 ## Project context
-- Home replica la pantalla principal de la referencia con mapa Leaflet, cards y modal en src/app/page.tsx.
-- Login replica el diseno original en src/app/login/page.tsx (route /login).
+- En App Router, src/app solo contiene entrypoints de rutas, layouts y route handlers.
+- Home se expone en la ruta / con src/app/page.tsx, pero la pantalla vive en src/features/home/pages/home-screen.tsx.
+- Login se expone en la ruta /login con src/app/login/page.tsx, pero la pantalla vive en src/features/login/pages/login-screen.tsx.
+- La API /api/found-pets entra por src/app/api/found-pets/route.ts y delega en src/modules/found-pets.
 - Leaflet CSS se importa en src/app/page.tsx (no en globals.css) por compatibilidad con Tailwind/PostCSS.
 - Leaflet icons usan CDN via L.Icon.Default.mergeOptions para evitar errores de iconUrl en Turbopack.
 - Theme global y variables estan alineados con la referencia en src/app/globals.css.
