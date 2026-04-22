@@ -15,6 +15,7 @@ model Owner {
   email     String?
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   foundPets FoundPet[]
+  lostPets  LostPet[]
 
   @@map("owners")
 }
@@ -36,4 +37,23 @@ model FoundPet {
 
   @@index([createdAt(sort: Desc)], map: "found_pets_created_at_idx")
   @@map("found_pets")
+}
+
+model LostPet {
+  id           BigInt   @id @default(autoincrement()) @db.BigInt
+  ownerId      BigInt   @map("owner_id") @db.BigInt
+  owner        Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  species      String
+  breed        String
+  imageUrl     String   @map("image_url")
+  description  String
+  locationText String   @map("location_text")
+  latitude     Float
+  longitude    Float
+  lastSeen     String   @map("last_seen") // Usamos String porque en el modal lo capturamos como texto libre ("Hoy a las 15:00 hrs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)], map: "lost_pets_created_at_idx")
+  @@map("lost_pets")
 }
