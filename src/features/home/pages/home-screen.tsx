@@ -9,6 +9,8 @@ import { PetsMap } from "@/features/home/components/pets-map";
 import { ReportPetModal } from "@/features/home/components/report-pet-modal";
 import { mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
 import { ApiFoundPet, FiltersState, Pet, ReportFormState } from "@/features/home/types";
+import { SelectedReportPetModal } from "@/features/home/components/selected-report-pet-modal";
+import { LostPetModal } from "../components/lost-pet-modal";
 
 const defaultReportForm: ReportFormState = {
   name: "",
@@ -38,6 +40,9 @@ export function HomeScreen() {
     date: "all",
   });
   const [reportForm, setReportForm] = useState<ReportFormState>(defaultReportForm);
+  const [selectionModalOpen, setSelectionModalOpen] = useState(false);
+  const [lostReportModalOpen, setLostReportModalOpen] = useState(false);
+  
 
   useEffect(() => {
     import("leaflet").then((L) => {
@@ -101,16 +106,34 @@ export function HomeScreen() {
   };
 
   const openReportModalAt = (coordinates: [number, number]) => {
-    const [latitude, longitude] = coordinates;
-
+    // 1. Guardamos la ubicación seleccionada
     setReportLocation(coordinates);
-    setSubmitError(null);
-    setReportForm((current) => ({
-      ...current,
-      locationText: current.locationText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-    }));
-    setReportModalOpen(true);
+    // 2. En lugar de abrir el formulario directamente, abrimos el modal de selección
+    setSelectionModalOpen(true);
   };
+
+  const handleSelectFound = () => {
+    // Cerramos el modal de selección
+    setSelectionModalOpen(false);
+    
+    // Preparamos los datos del formulario de mascota encontrada y lo abrimos
+    if (reportLocation) {
+      const [latitude, longitude] = reportLocation;
+      setSubmitError(null);
+      setReportForm((current) => ({
+        ...current,
+        locationText: current.locationText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+      }));
+      setReportModalOpen(true);
+    }
+  };
+
+  const handleSelectLost = () => {
+  setSelectionModalOpen(false); // Cierra el menú de selección
+  setLostReportModalOpen(true); // Abre el formulario de mascota perdida
+};
+
+
 
   const handleMapClick = (coordinates: [number, number]) => {
     openReportModalAt(coordinates);
@@ -215,6 +238,14 @@ export function HomeScreen() {
         />
       </div>
 
+     {/* Menú de selección (Encontrada vs Perdida) */}
+     <SelectedReportPetModal
+      open={selectionModalOpen}
+      onClose={() => setSelectionModalOpen(false)}
+      onSelectFound={handleSelectFound}
+      onSelectLost={handleSelectLost}
+     />
+
       <ReportPetModal
         open={reportModalOpen}
         reportLocation={reportLocation}
@@ -225,6 +256,12 @@ export function HomeScreen() {
         onSubmit={handleCreateReport}
         onFormChange={handleReportFormChange}
       />
+
+      <LostPetModal
+      open={lostReportModalOpen}
+      onClose={() => setLostReportModalOpen(false)}
+      reportLocation={reportLocation}
+     />
 
       <PetDetailsModal
         pet={selectedPet}

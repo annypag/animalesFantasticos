@@ -16,7 +16,7 @@ export function HomeNavbar({ onReportClick }: HomeNavbarProps) {
             <PawPrint className="h-6 w-6 text-white" />
           </div>
           <span className="hidden text-xl font-semibold text-foreground sm:inline-block">
-            Mascotas Perdidas
+            Woofie
           </span>
         </Link>
 
