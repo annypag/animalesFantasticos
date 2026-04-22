@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { mockPets } from "@/features/home/data/mock-pets";
 import { FiltersBar } from "@/features/home/components/filters-bar";
-import { HomeNavbar } from "@/features/home/components/home-navbar";
 import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
 import { PetsList } from "@/features/home/components/pets-list";
 import { PetsMap } from "@/features/home/components/pets-map";
@@ -11,7 +10,6 @@ import { ReportPetModal } from "@/features/home/components/report-pet-modal";
 import { mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
 import { ApiFoundPet, FiltersState, Pet, ReportFormState } from "@/features/home/types";
 
-const defaultMapCenter: [number, number] = [-34.5875, -58.42];
 const defaultReportForm: ReportFormState = {
   name: "",
   species: "Perro",
@@ -118,10 +116,6 @@ export function HomeScreen() {
     openReportModalAt(coordinates);
   };
 
-  const handleReportFromNavbar = () => {
-    openReportModalAt(defaultMapCenter);
-  };
-
   const handleCreateReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -196,9 +190,7 @@ export function HomeScreen() {
   };
 
   return (
-    <main className="flex h-screen flex-col bg-background">
-      <HomeNavbar onReportClick={handleReportFromNavbar} />
-
+    <main className="flex min-h-0 flex-1 flex-col bg-background">
       <FiltersBar
         showFilters={showFilters}
         filters={filters}

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Calendar, MapPin } from "lucide-react";
+import { formatAbsoluteDateTime } from "@/features/home/lib/pet-utils";
 import { Pet } from "@/features/home/types";
 
 interface PetsListProps {
@@ -50,6 +51,12 @@ export function PetsList({ pets, selectedPetId, loadingDbPets, onPetSelect }: Pe
                   <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>Visto {pet.lastSeen}</span>
                 </div>
+                {pet.createdAt && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Publicado {formatAbsoluteDateTime(pet.createdAt)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </article>

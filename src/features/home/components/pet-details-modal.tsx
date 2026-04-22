@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Calendar, MapPin, X } from "lucide-react";
+import { formatAbsoluteDateTime } from "@/features/home/lib/pet-utils";
 import { Pet } from "@/features/home/types";
 
 const MapContainer = dynamic(
@@ -78,6 +79,15 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
                 <p className="text-sm">{pet.lastSeen}</p>
               </div>
             </div>
+            {pet.createdAt && (
+              <div className="flex items-start gap-3">
+                <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+                <div>
+                  <p className="mb-1 text-sm text-muted-foreground">Fecha de publicacion</p>
+                  <p className="text-sm">{formatAbsoluteDateTime(pet.createdAt)}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mb-6">

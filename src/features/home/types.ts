@@ -3,9 +3,11 @@ export interface Pet {
   name: string;
   species: string;
   breed: string;
+  size?: string;
   image: string;
   distance: string;
   lastSeen: string;
+  createdAt?: string;
   location: string;
   coordinates: [number, number];
   description: string;

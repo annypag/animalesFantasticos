@@ -7,6 +7,10 @@ Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, b
 - Guardar mascota + persona responsable en base de datos.
 - Ver lo guardado en la lista lateral y como pin en el mapa.
 
+## Diagrama MVP
+
+![MVP](public/MVP.png)
+
 ## Requisitos
 
 - Node.js 20+ (recomendado 22 LTS).

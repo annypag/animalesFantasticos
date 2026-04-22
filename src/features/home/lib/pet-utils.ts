@@ -9,6 +9,7 @@ export function mapApiPetToUiPet(apiPet: ApiFoundPet): Pet {
     image: apiPet.imageUrl,
     distance: "nuevo",
     lastSeen: formatRelativeTime(apiPet.foundAt),
+    createdAt: apiPet.foundAt,
     location: apiPet.locationText,
     coordinates: [apiPet.latitude, apiPet.longitude],
     description: apiPet.description,
@@ -32,4 +33,25 @@ export function formatRelativeTime(isoDate: string): string {
 
   const deltaDays = Math.round(deltaHours / 24);
   return new Intl.RelativeTimeFormat("es", { numeric: "auto" }).format(deltaDays, "day");
+}
+
+export function formatAbsoluteDateTime(isoDate?: string): string {
+  if (!isoDate) {
+    return "sin fecha";
+  }
+
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return "sin fecha";
+  }
+
+  return date.toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
 }
