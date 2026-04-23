@@ -273,42 +273,24 @@ Esta seccion documenta el flujo completo para implementar un endpoint nuevo con 
 ### 0) Diagrama de flujo (request -> domain -> response)
 
 ```mermaid
-flowchart LR
-  UI[UI src/features]
-
-  subgraph APP[App Router]
-    R[route.ts /api/lost-pets]
-  end
-
-  subgraph P[Presentation]
-    H[handlePostLostPets]
-  end
-
-  subgraph A[Application]
-    V[validateRegisterLostPetPayload]
-    U[registerLostPet use-case]
-    PORT[LostPetsRepository port]
-  end
-
-  subgraph I[Infrastructure]
-    REPO[PrismaLostPetsRepository]
-  end
-
-  DB[(PostgreSQL)]
-
-  UI -->|POST /api/lost-pets| R
-  R --> H
-  H --> V
-  V -->|payload valido| U
-  V -->|payload invalido| E400[HTTP 400 ValidationError]
-  U --> PORT
-  PORT --> REPO
-  REPO --> DB
-  DB --> REPO --> U --> H --> OK[HTTP 201 { pet }]
-  REPO --> E500[HTTP 500 error inesperado]
-  E400 --> R --> UI
-  OK --> R --> UI
+graph LR
+  UI["UI (src/features)"] -->|"POST /api/lost-pets"| R["route.ts (App Router)"]
+  R --> H["handlePostLostPets (presentation/http)"]
+  H --> V["validateRegisterLostPetPayload"]
+  V -->|"payload valido"| U["registerLostPet (use-case)"]
+  V -->|"payload invalido"| E400["HTTP 400 ValidationError"]
+  U --> PORT["LostPetsRepository (port)"]
+  PORT --> REPO["PrismaLostPetsRepository"]
+  REPO --> DB[("PostgreSQL")]
+  DB --> REPO
+  REPO --> U
+  U --> H
+  H --> OK["HTTP 201 { pet }"]
+  REPO --> E500["HTTP 500 error inesperado"]
+  E400 --> R
+  OK --> R
   E500 --> H
+  R --> UI
 ```
 
 ### 1) Route handler fino
