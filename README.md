@@ -276,9 +276,10 @@ Esta seccion documenta el flujo completo para implementar un endpoint nuevo con 
 graph LR
   UI["UI (src/features)"] -->|"POST /api/lost-pets"| R["route.ts (App Router)"]
   R --> H["handlePostLostPets (presentation/http)"]
-  H --> V["validateRegisterLostPetPayload"]
+  H --> J["request.json()"]
+  J --> V["validateRegisterLostPetPayload"]
   V -->|"payload valido"| U["registerLostPet (use-case)"]
-  V -->|"payload invalido"| E400["HTTP 400 ValidationError"]
+  V -->|"payload invalido"| C["catch(error) en handler"]
   U --> PORT["LostPetsRepository (port)"]
   PORT --> REPO["PrismaLostPetsRepository"]
   REPO --> DB[("PostgreSQL")]
@@ -286,10 +287,13 @@ graph LR
   REPO --> U
   U --> H
   H --> OK["HTTP 201 { pet }"]
-  REPO --> E500["HTTP 500 error inesperado"]
+  J -->|"json invalido"| C
+  REPO -->|"throw"| C
+  C -->|"ValidationError"| E400["HTTP 400"]
+  C -->|"otro error"| E500["HTTP 500"]
   E400 --> R
   OK --> R
-  E500 --> H
+  E500 --> R
   R --> UI
 ```
 
