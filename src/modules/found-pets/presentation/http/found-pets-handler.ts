@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ValidationError } from "@/modules/found-pets/application/errors/validation-error";
+import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 import { listFoundPets } from "@/modules/found-pets/application/use-cases/list-found-pets";
 import { registerFoundPet } from "@/modules/found-pets/application/use-cases/register-found-pet";
 import { validateRegisterFoundPetPayload } from "@/modules/found-pets/application/validators/register-found-pet";

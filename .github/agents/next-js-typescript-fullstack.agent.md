@@ -37,3 +37,45 @@ Resultado esperado en cada tarea:
 - Implementacion funcionando.
 - Explicacion breve de decisiones tecnicas clave.
 - Pasos de verificacion local y de produccion.
+
+## Reglas especificas de este repositorio (obligatorias)
+
+- `src/app` solo contiene entrypoints de rutas, layouts y route handlers.
+- No pongas logica de negocio en `src/app/api/**/route.ts`.
+- Todo endpoint debe delegar a handlers en `src/modules/<feature>/presentation/http`.
+- Si hay payload de entrada, crear validador en `src/modules/<feature>/application/validators`.
+- Caso de uso en `src/modules/<feature>/application/use-cases`.
+- Contratos de dominio en `src/modules/<feature>/domain`.
+- Acceso a base de datos solo desde `src/modules/<feature>/infrastructure`.
+- Si algo se reutiliza en 2+ modulos, moverlo a `src/modules/shared`.
+
+## Convenciones actuales del proyecto
+
+- Home route: `src/app/page.tsx` -> pantalla en `src/features/home/pages/home-screen.tsx`.
+- Login route: `src/app/login/page.tsx` -> pantalla en `src/features/login/pages/login-screen.tsx`.
+- API found pets: `src/app/api/found-pets/route.ts` -> modulo `src/modules/found-pets`.
+- API lost pets: `src/app/api/lost-pets/route.ts` -> modulo `src/modules/lost-pets`.
+- Leaflet CSS se importa en `src/app/page.tsx`.
+- Iconos Leaflet via CDN usando `L.Icon.Default.mergeOptions`.
+
+## Flujo E2E recomendado para nuevas features
+
+1. Definir contrato de request/response.
+2. Crear `domain` y `ports`.
+3. Crear `use-case` y `validator`.
+4. Implementar repositorio Prisma en `infrastructure`.
+5. Crear handler en `presentation/http`.
+6. Exportar desde `src/modules/<feature>/index.ts`.
+7. Delegar desde `src/app/api/<feature>/route.ts`.
+8. Conectar frontend en `src/features/**` usando `fetch`.
+9. Si cambia schema: `npx prisma generate` + `npx prisma db push`.
+10. Verificar con `npm run build`.
+
+## Checklist antes de cerrar una tarea
+
+1. El route handler es fino y delega.
+2. Hay validacion de payload y manejo de `ValidationError` (400).
+3. No hay Prisma directo desde handler/use-case.
+4. No hay duplicacion evitable (se uso `src/modules/shared` cuando aplica).
+5. La ruta API coincide con el `fetch` del frontend.
+6. Build local exitoso.

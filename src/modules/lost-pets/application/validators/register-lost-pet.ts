@@ -1,4 +1,4 @@
-import { RegisterFoundPetInput } from "@/modules/found-pets/domain/found-pet";
+import { RegisterLostPetInput } from "@/modules/lost-pets/domain/lost-pet";
 import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 import {
   asFiniteNumber,
@@ -17,15 +17,16 @@ interface RequestPayload {
     locationText?: unknown;
     latitude?: unknown;
     longitude?: unknown;
+    lastSeen?: unknown;
   };
-  finder?: {
+  owner?: {
     fullName?: unknown;
     phone?: unknown;
     email?: unknown;
   };
 }
 
-export function validateRegisterFoundPetPayload(payload: unknown): RegisterFoundPetInput {
+export function validateRegisterLostPetPayload(payload: unknown): RegisterLostPetInput {
   const data = payload as RequestPayload;
 
   const name = asTrimmedString(data?.pet?.name);
@@ -36,14 +37,15 @@ export function validateRegisterFoundPetPayload(payload: unknown): RegisterFound
   const locationText = asNullableTrimmedString(data?.pet?.locationText);
   const latitude = asFiniteNumber(data?.pet?.latitude);
   const longitude = asFiniteNumber(data?.pet?.longitude);
+  const lastSeen = asTrimmedString(data?.pet?.lastSeen);
 
-  const fullName = asTrimmedString(data?.finder?.fullName);
-  const phone = asTrimmedString(data?.finder?.phone);
-  const email = asNullableTrimmedString(data?.finder?.email);
+  const fullName = asTrimmedString(data?.owner?.fullName);
+  const phone = asTrimmedString(data?.owner?.phone);
+  const email = asNullableTrimmedString(data?.owner?.email);
 
-  if (!name || !breed || !description || !fullName || !phone) {
+  if (!name || !breed || !description || !fullName || !phone || !lastSeen) {
     throw new ValidationError(
-      "Faltan campos obligatorios. Completá nombre, raza, descripción y datos de contacto.",
+      "Faltan campos obligatorios. Completá nombre, raza, descripción, último avistamiento y datos de contacto.",
     );
   }
 
@@ -69,6 +71,7 @@ export function validateRegisterFoundPetPayload(payload: unknown): RegisterFound
       locationText,
       latitude,
       longitude,
+      lastSeen,
     },
     owner: {
       fullName,

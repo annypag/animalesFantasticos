@@ -64,8 +64,8 @@ npm run db:logs
 ### 4) Generar cliente Prisma y sincronizar esquema
 
 ```bash
-npm run prisma:generate
-npm run prisma:db:push
+npx prisma generate
+npx prisma db push
 ```
 
 ### 5) Levantar la app
@@ -105,6 +105,7 @@ Para crear la conexion al contenedor:
 
 - `GET /api/found-pets`: lista mascotas guardadas.
 - `POST /api/found-pets`: crea mascota + responsable.
+- `POST /api/lost-pets`: crea reporte de mascota perdida + responsable.
 
 ## Como esta organizado el proyecto
 
@@ -112,14 +113,20 @@ Para crear la conexion al contenedor:
 - `src/app/page.tsx`: entrypoint de la ruta `/` (wrapper fino).
 - `src/app/login/page.tsx`: entrypoint de la ruta `/login` (wrapper fino).
 - `src/app/api/found-pets/route.ts`: entrada HTTP (route handler).
+- `src/app/api/lost-pets/route.ts`: entrada HTTP (route handler).
 - `src/features/home/pages/home-screen.tsx`: implementacion de pantalla Home.
 - `src/features/login/pages/login-screen.tsx`: implementacion de pantalla Login.
 - `src/modules/found-pets/presentation/http/`: capa de presentacion HTTP.
 - `src/modules/found-pets/application/`: casos de uso, puertos y validaciones.
 - `src/modules/found-pets/domain/`: entidades y contratos de dominio.
 - `src/modules/found-pets/infrastructure/`: implementacion de repositorio con Prisma.
+- `src/modules/lost-pets/presentation/http/`: capa de presentacion HTTP.
+- `src/modules/lost-pets/application/`: casos de uso, puertos y validaciones.
+- `src/modules/lost-pets/domain/`: entidades y contratos de dominio.
+- `src/modules/lost-pets/infrastructure/`: implementacion de repositorio con Prisma.
+- `src/modules/shared/`: utilidades compartidas entre modulos (`ValidationError`, parsers de payload, `PetSpecies`).
 - `src/lib/prisma.ts`: PrismaClient singleton.
-- `prisma/schema.prisma`: mapeo ORM a tablas `owners` y `found_pets`.
+- `prisma/schema.prisma`: mapeo ORM a tablas `owners`, `found_pets` y `lost_pets`.
 
 ## Convencion de rutas (App Router)
 
@@ -130,6 +137,7 @@ Para crear la conexion al contenedor:
 - Ejemplo real: `src/app/page.tsx` -> `/`.
 - Ejemplo real: `src/app/login/page.tsx` -> `/login`.
 - Ejemplo real: `src/app/api/found-pets/route.ts` -> `/api/found-pets`.
+- Ejemplo real: `src/app/api/lost-pets/route.ts` -> `/api/lost-pets`.
 
 ## Guia rapida: agregar una funcionalidad basica (E2E)
 
@@ -154,6 +162,7 @@ Este archivo debe ser fino: solo recibe request y delega al modulo de backend.
 Ejemplo del proyecto:
 
 - `src/app/api/found-pets/route.ts`
+- `src/app/api/lost-pets/route.ts`
 
 ### 3) Implementar backend por capas en modules
 
@@ -170,6 +179,7 @@ La logica de negocio no va en `src/app/api`; va en:
 Referencia real para copiar estructura:
 
 - `src/modules/found-pets/`
+- `src/modules/lost-pets/`
 
 ### 4) Crear pantalla y componentes de frontend
 
@@ -212,13 +222,13 @@ Si la feature requiere tablas/campos nuevos:
 2. Generar cliente:
 
 ```bash
-npm run prisma:generate
+npx prisma generate
 ```
 
 3. Sincronizar esquema:
 
 ```bash
-npm run prisma:db:push
+npx prisma db push
 ```
 
 Notas:
@@ -256,13 +266,202 @@ npm run dev
 - Acoplar frontend a modelos de Prisma sin mapear tipos de UI.
 - Crear instancias nuevas de PrismaClient en varios archivos.
 
+## Caso E2E detallado: POST /api/lost-pets
+
+Esta seccion documenta el flujo completo para implementar un endpoint nuevo con la arquitectura por capas del repo.
+
+### 0) Diagrama de flujo (request -> domain -> response)
+
+```mermaid
+flowchart LR
+  UI[UI src/features]
+
+  subgraph APP[App Router]
+    R[route.ts /api/lost-pets]
+  end
+
+  subgraph P[Presentation]
+    H[handlePostLostPets]
+  end
+
+  subgraph A[Application]
+    V[validateRegisterLostPetPayload]
+    U[registerLostPet use-case]
+    PORT[LostPetsRepository port]
+  end
+
+  subgraph I[Infrastructure]
+    REPO[PrismaLostPetsRepository]
+  end
+
+  DB[(PostgreSQL)]
+
+  UI -->|POST /api/lost-pets| R
+  R --> H
+  H --> V
+  V -->|payload valido| U
+  V -->|payload invalido| E400[HTTP 400 ValidationError]
+  U --> PORT
+  PORT --> REPO
+  REPO --> DB
+  DB --> REPO --> U --> H --> OK[HTTP 201 { pet }]
+  REPO --> E500[HTTP 500 error inesperado]
+  E400 --> R --> UI
+  OK --> R --> UI
+  E500 --> H
+```
+
+### 1) Route handler fino
+
+Archivo:
+
+- `src/app/api/lost-pets/route.ts`
+
+Responsabilidad:
+
+- No contiene logica de negocio.
+- Solo delega a `handlePostLostPets`.
+
+### 2) Capa de presentacion HTTP
+
+Archivo:
+
+- `src/modules/lost-pets/presentation/http/lost-pets-handler.ts`
+
+Responsabilidad:
+
+- Parsear `request.json()`.
+- Validar payload con `validateRegisterLostPetPayload`.
+- Ejecutar caso de uso `registerLostPet`.
+- Manejar errores de validacion (`ValidationError`) devolviendo `400`.
+- Manejar errores inesperados devolviendo `500`.
+
+### 3) Capa de aplicacion
+
+Archivos:
+
+- `src/modules/lost-pets/application/use-cases/register-lost-pet.ts`
+- `src/modules/lost-pets/application/validators/register-lost-pet.ts`
+- `src/modules/lost-pets/application/ports/lost-pets-repository.ts`
+
+Responsabilidad:
+
+- `use-cases`: orquestar la operacion de negocio sin depender de Next ni de Prisma.
+- `validators`: transformar payload `unknown` a `RegisterLostPetInput` y aplicar reglas.
+- `ports`: declarar contrato del repositorio para desacoplar infraestructura.
+
+### 4) Capa de dominio
+
+Archivo:
+
+- `src/modules/lost-pets/domain/lost-pet.ts`
+
+Responsabilidad:
+
+- Definir tipos de dominio (`LostPet`, `LostPetOwner`, `RegisterLostPetInput`).
+- Mantener contrato estable para app/use-cases/repositorio.
+
+### 5) Capa de infraestructura (Prisma)
+
+Archivo:
+
+- `src/modules/lost-pets/infrastructure/prisma-lost-pets-repository.ts`
+
+Responsabilidad:
+
+- Implementar `LostPetsRepository` usando `PrismaClient`.
+- Crear `owner` y `lostPet` dentro de transaccion.
+- Mapear `bigint`/`Date` de Prisma a tipos de dominio serializables.
+
+### 6) Reutilizacion para evitar duplicacion
+
+Archivos compartidos:
+
+- `src/modules/shared/domain/pet-species.ts`
+- `src/modules/shared/application/errors/validation-error.ts`
+- `src/modules/shared/application/validation/payload-parsers.ts`
+
+Que se comparte:
+
+- `PetSpecies` para `found-pets` y `lost-pets`.
+- Clase `ValidationError`.
+- Helpers de parseo/normalizacion de payload (`string`, `number`, `species`).
+
+### 7) Payload esperado por /api/lost-pets
+
+```json
+{
+  "pet": {
+    "name": "Luna",
+    "species": "Gato",
+    "breed": "Mestizo",
+    "imageUrl": "https://...",
+    "description": "Se perdio cerca de la plaza",
+    "locationText": "Palermo, CABA",
+    "latitude": -34.5875,
+    "longitude": -58.42,
+    "lastSeen": "Hoy 18:30"
+  },
+  "owner": {
+    "fullName": "Emiliano",
+    "phone": "+54 11 1234-5678",
+    "email": "emi@email.com"
+  }
+}
+```
+
+### 8) Checklist para agregar cualquier nuevo endpoint E2E
+
+1. Crear `app/api/<feature>/route.ts` delegando a un handler.
+2. Crear handler en `presentation/http`.
+3. Definir `domain` y `ports`.
+4. Crear `use-case` + `validator`.
+5. Implementar repositorio Prisma en `infrastructure`.
+6. Exportar handlers en `src/modules/<feature>/index.ts`.
+7. Correr `npx prisma generate` y `npx prisma db push` si cambias schema.
+8. Verificar con `npm run build`.
+
+## Guia para agentes IA
+
+Esta seccion es para cualquier agente (Codex/Claude/otros) que vaya a implementar cambios en este repo.
+
+### Principios de orden y estructura
+
+- Mantener `src/app` como entrypoint fino (sin logica de negocio).
+- Implementar backend en `src/modules/<feature>` por capas.
+- Reutilizar `src/modules/shared` para validaciones/errores/tipos comunes.
+- Evitar duplicacion: si una regla se usa en 2 modulos, moverla a `shared`.
+
+### Orden recomendado al implementar una feature E2E
+
+1. Definir contrato de entrada/salida.
+2. Crear/ajustar tipos de `domain`.
+3. Crear `ports` y `use-cases`.
+4. Crear `validators` en application.
+5. Implementar repositorio en `infrastructure`.
+6. Crear handler HTTP en `presentation/http`.
+7. Exportar handler en `src/modules/<feature>/index.ts`.
+8. Delegar desde `src/app/api/<feature>/route.ts`.
+9. Conectar frontend (`src/features/...`) via `fetch`.
+10. Validar con `npm run build`.
+
+### Checklist de calidad minimo antes de cerrar una tarea
+
+1. El `route.ts` no contiene logica de negocio.
+2. Hay validacion de payload en `application/validators`.
+3. El handler maneja `ValidationError` con status `400`.
+4. El repositorio implementa un `port` (no acceso Prisma directo desde handler/use-case).
+5. No se duplicaron helpers que ya existian en `src/modules/shared`.
+6. La ruta publica coincide con el `fetch` del frontend.
+7. El proyecto compila (`npm run build`).
+
 ## Scripts utiles
 
 - `npm run dev`: levantar app en modo desarrollo.
 - `npm run lint`: correr linter.
-- `npm run prisma:generate`: generar cliente Prisma.
-- `npm run prisma:db:push`: sincronizar schema Prisma con DB.
-- `npm run prisma:studio`: abrir Prisma Studio.
+- `npx prisma generate`: generar cliente Prisma.
+- `npx prisma db push`: sincronizar schema Prisma con DB.
+- `npx prisma studio`: abrir Prisma Studio.
 - `npm run db:up`: levantar postgres + pgAdmin con Docker.
 - `npm run db:down`: bajar contenedores.
 - `npm run db:logs`: ver logs de contenedores.

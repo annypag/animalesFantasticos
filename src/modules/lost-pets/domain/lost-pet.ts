@@ -1,14 +1,13 @@
 import { PetSpecies } from "@/modules/shared/domain/pet-species";
-export type { PetSpecies };
 
-export interface FoundPetOwner {
+export interface LostPetOwner {
   id: number;
   fullName: string;
   phone: string;
   email: string | null;
 }
 
-export interface FoundPet {
+export interface LostPet {
   id: number;
   name: string;
   species: PetSpecies;
@@ -18,11 +17,12 @@ export interface FoundPet {
   locationText: string;
   latitude: number;
   longitude: number;
-  foundAt: string;
-  owner: FoundPetOwner;
+  lastSeen: string;
+  createdAt: string;
+  owner: LostPetOwner;
 }
 
-export interface RegisterFoundPetInput {
+export interface RegisterLostPetInput {
   pet: {
     name: string;
     species: PetSpecies;
@@ -32,6 +32,7 @@ export interface RegisterFoundPetInput {
     locationText: string | null;
     latitude: number;
     longitude: number;
+    lastSeen: string;
   };
   owner: {
     fullName: string;
