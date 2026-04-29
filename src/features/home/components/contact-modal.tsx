@@ -39,7 +39,7 @@ export function ContactModal({ open, onClose, pet }: ContactModalProps) {
         </p>
         
         {/* Botones de acción directos */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <a
             href={pet.ownerPhone ? `https://wa.me/${pet.ownerPhone}` : "#"}
             target="_blank"
@@ -48,9 +48,11 @@ export function ContactModal({ open, onClose, pet }: ContactModalProps) {
           >
             Enviar WhatsApp
           </a>
-          <a
-            href={pet.ownerPhone ? `tel:${pet.ownerPhone}` : "#"}
-            className="w-full rounded-full bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary/90 transition-colors"
+          
+          {/* Botón de Enviar mensaje corregido */}
+          <a 
+            href={pet.ownerPhone ? `sms:${pet.ownerPhone}` : "#"}
+            className="w-full rounded-full bg-primary px-4 py-3 text-sm font-bold !text-white hover:bg-primary/90 transition-colors"
           >
             Enviar mensaje
           </a>
