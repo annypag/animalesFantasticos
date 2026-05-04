@@ -120,3 +120,9 @@ textarea {
     opacity: 0.7;
   }
 }
+
+/* Keep Leaflet map layers below app overlays (navbar, panels, modals). */
+.leaflet-container {
+  position: relative;
+  z-index: 0;
+}
