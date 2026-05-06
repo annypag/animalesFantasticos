@@ -67,6 +67,12 @@ export function PetsList({ pets, selectedPetId, loadingDbPets, onPetSelect }: Pe
             Cargando reportes guardados en base de datos...
           </div>
         )}
+
+        {!loadingDbPets && pets.length === 0 && (
+          <div className="col-span-full rounded-2xl border border-dashed border-border bg-white p-5 text-sm text-muted-foreground">
+            No hay mascotas para los filtros seleccionados.
+          </div>
+        )}
       </div>
     </div>
   );

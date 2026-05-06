@@ -35,6 +35,7 @@ export function HomeScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FiltersState>({
+    status: "all",
     species: "all",
     size: "all",
     date: "all",
@@ -94,7 +95,11 @@ export function HomeScreen() {
     };
   }, []);
 
-  const filteredPets = useMemo(() => [...dbPets, ...mockPets], [dbPets]);
+  const filteredPets = useMemo(() => {
+    return [...dbPets, ...mockPets].filter((pet) => {
+      return filters.status === "all" || pet.status === filters.status;
+    });
+  }, [dbPets, filters.status]);
 
   const handlePetSelect = (pet: Pet) => {
     setSelectedPet(pet);

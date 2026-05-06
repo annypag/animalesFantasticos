@@ -4,6 +4,7 @@ export const mockPets: Pet[] = [
   {
     id: "1",
     name: "Max",
+    status: "lost",
     species: "Perro",
     breed: "Golden Retriever",
     image:
@@ -19,6 +20,7 @@ export const mockPets: Pet[] = [
   {
     id: "2",
     name: "Luna",
+    status: "lost",
     species: "Gato",
     breed: "Negro Comun",
     image:
@@ -34,6 +36,7 @@ export const mockPets: Pet[] = [
   {
     id: "3",
     name: "Rocky",
+    status: "found",
     species: "Perro",
     breed: "Beagle",
     image:
@@ -49,6 +52,7 @@ export const mockPets: Pet[] = [
   {
     id: "4",
     name: "Mimi",
+    status: "lost",
     species: "Gato",
     breed: "Atigrado",
     image:
@@ -64,6 +68,7 @@ export const mockPets: Pet[] = [
   {
     id: "5",
     name: "Toby",
+    status: "found",
     species: "Perro",
     breed: "Labrador",
     image:
@@ -79,6 +84,7 @@ export const mockPets: Pet[] = [
   {
     id: "6",
     name: "Nieve",
+    status: "found",
     species: "Gato",
     breed: "Blanco Persa",
     image:

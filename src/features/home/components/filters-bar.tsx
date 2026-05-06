@@ -35,6 +35,15 @@ export function FiltersBar({
           {showFilters && (
             <div className="flex flex-wrap gap-2">
               <select
+                value={filters.status}
+                onChange={(event) => onFilterChange("status", event.target.value)}
+                className="h-9 rounded-full border border-border bg-white px-3 text-sm"
+              >
+                <option value="all">Todas</option>
+                <option value="lost">Perdidas</option>
+                <option value="found">Encontradas</option>
+              </select>
+              <select
                 value={filters.species}
                 onChange={(event) => onFilterChange("species", event.target.value)}
                 className="h-9 rounded-full border border-border bg-white px-3 text-sm"
@@ -67,7 +76,7 @@ export function FiltersBar({
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground">{petCount} mascotas perdidas cerca</p>
+        <p className="text-sm text-muted-foreground">{petCount} mascotas cerca</p>
       </div>
     </div>
   );
