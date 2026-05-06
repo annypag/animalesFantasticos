@@ -49,8 +49,8 @@ export function FiltersBar({
                 className="h-9 rounded-full border border-border bg-white px-3 text-sm"
               >
                 <option value="all">Todas</option>
-                <option value="dog">Perros</option>
-                <option value="cat">Gatos</option>
+                <option value="Perro">Perros</option>
+                <option value="Gato">Gatos</option>
               </select>
               <select
                 value={filters.size}

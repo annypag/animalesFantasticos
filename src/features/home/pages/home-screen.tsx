@@ -24,6 +24,44 @@ const defaultReportForm: ReportFormState = {
   ownerEmail: "",
 };
 
+function matchesDateFilter(createdAt: string | undefined, dateFilter: string): boolean {
+  if (dateFilter === "all") {
+    return true;
+  }
+
+  if (!createdAt) {
+    return false;
+  }
+
+  const createdDate = new Date(createdAt);
+
+  if (Number.isNaN(createdDate.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  if (dateFilter === "today") {
+    return createdDate.toDateString() === now.toDateString();
+  }
+
+  if (dateFilter === "week") {
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    return createdDate >= sevenDaysAgo && createdDate <= now;
+  }
+
+  if (dateFilter === "month") {
+    return (
+      createdDate.getFullYear() === now.getFullYear() &&
+      createdDate.getMonth() === now.getMonth()
+    );
+  }
+
+  return true;
+}
+
 export function HomeScreen() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportLocation, setReportLocation] = useState<[number, number] | null>(null);
@@ -97,9 +135,14 @@ export function HomeScreen() {
 
   const filteredPets = useMemo(() => {
     return [...dbPets, ...mockPets].filter((pet) => {
-      return filters.status === "all" || pet.status === filters.status;
+      const matchesStatus = filters.status === "all" || pet.status === filters.status;
+      const matchesSpecies = filters.species === "all" || pet.species === filters.species;
+      const matchesSize = filters.size === "all" || pet.size === filters.size;
+      const matchesDate = matchesDateFilter(pet.createdAt, filters.date);
+
+      return matchesStatus && matchesSpecies && matchesSize && matchesDate;
     });
-  }, [dbPets, filters.status]);
+  }, [dbPets, filters.status, filters.species, filters.size, filters.date]);
 
   const handlePetSelect = (pet: Pet) => {
     setSelectedPet(pet);
