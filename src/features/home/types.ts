@@ -38,14 +38,3 @@ export interface FiltersState {
   date: string;
 }
 
-export interface ReportFormState {
-  name: string;
-  species: string;
-  breed: string;
-  imageUrl: string;
-  description: string;
-  locationText: string;
-  ownerName: string;
-  ownerPhone: string;
-  ownerEmail: string;
-}
