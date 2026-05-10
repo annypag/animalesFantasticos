@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   defaultReportPetForm,
   ReportPetErrors,
@@ -20,12 +20,38 @@ export function useReportPetForm({
   onSuccess,
 }: UseReportPetFormParams) {
   const [form, setForm] = useState<ReportPetFormState>(defaultReportPetForm);
+
   const [coordinates, setCoordinates] = useState<[number, number] | null>(
     initialLocation,
   );
+
   const [errors, setErrors] = useState<ReportPetErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const formatCoordinatesText = (coordinates: [number, number]) => {
+    const [latitude, longitude] = coordinates;
+    return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+  };
+
+  useEffect(() => {
+    if (!initialLocation) {
+      return;
+    }
+
+    setCoordinates(initialLocation);
+
+    setForm((current) => ({
+      ...current,
+      locationText: formatCoordinatesText(initialLocation),
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      coordinates: undefined,
+      locationText: undefined,
+    }));
+  }, [initialLocation]);
 
   const changeField = <T extends keyof ReportPetFormState>(
     field: T,
@@ -43,19 +69,17 @@ export function useReportPetForm({
   };
 
   const changeCoordinates = (nextCoordinates: [number, number]) => {
-    const [latitude, longitude] = nextCoordinates;
-
     setCoordinates(nextCoordinates);
 
     setForm((current) => ({
       ...current,
-      locationText:
-        current.locationText || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      locationText: formatCoordinatesText(nextCoordinates),
     }));
 
     setErrors((current) => ({
       ...current,
       coordinates: undefined,
+      locationText: undefined,
     }));
   };
 
