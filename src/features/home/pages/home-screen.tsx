@@ -1,48 +1,36 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { mockPets } from "@/features/home/data/mock-pets";
 import { FiltersBar } from "@/features/home/components/filters-bar";
 import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
 import { PetsList } from "@/features/home/components/pets-list";
 import { PetsMap } from "@/features/home/components/pets-map";
-import { ReportPetModal } from "@/features/home/components/report-pet-modal";
 import { mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
-import { ApiFoundPet, FiltersState, Pet, ReportFormState } from "@/features/home/types";
+import { ApiFoundPet, FiltersState, Pet } from "@/features/home/types";
 import { SelectedReportPetModal } from "@/features/home/components/selected-report-pet-modal";
-import { LostPetModal } from "../components/lost-pet-modal";
-
-const defaultReportForm: ReportFormState = {
-  name: "",
-  species: "Perro",
-  breed: "",
-  imageUrl: "",
-  description: "",
-  locationText: "",
-  ownerName: "",
-  ownerPhone: "",
-  ownerEmail: "",
-};
+import { ReportPetModal } from "@/features/report/components/report-pet-modal";
+import type { ReportType } from "@/features/report/types/types";
 
 export function HomeScreen() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [reportLocation, setReportLocation] = useState<[number, number] | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reportType, setReportType] = useState<ReportType>("found");
+  const [reportLocation, setReportLocation] = useState<[number, number] | null>(
+    null,
+  );
+
   const [loadingDbPets, setLoadingDbPets] = useState(true);
-  const [savingPet, setSavingPet] = useState(false);
   const [dbPets, setDbPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectionModalOpen, setSelectionModalOpen] = useState(false);
+
   const [filters, setFilters] = useState<FiltersState>({
     species: "all",
     size: "all",
     date: "all",
   });
-  const [reportForm, setReportForm] = useState<ReportFormState>(defaultReportForm);
-  const [selectionModalOpen, setSelectionModalOpen] = useState(false);
-  const [lostReportModalOpen, setLostReportModalOpen] = useState(false);
-  
 
   useEffect(() => {
     import("leaflet").then((L) => {
@@ -105,104 +93,21 @@ export function HomeScreen() {
     setSelectedPet(pet);
   };
 
-  const openReportModalAt = (coordinates: [number, number]) => {
-    // 1. Guardamos la ubicación seleccionada
+  const handleMapClick = (coordinates: [number, number]) => {
     setReportLocation(coordinates);
-    // 2. En lugar de abrir el formulario directamente, abrimos el modal de selección
     setSelectionModalOpen(true);
   };
 
   const handleSelectFound = () => {
-    // Cerramos el modal de selección
+    setReportType("found");
     setSelectionModalOpen(false);
-    
-    // Preparamos los datos del formulario de mascota encontrada y lo abrimos
-    if (reportLocation) {
-      const [latitude, longitude] = reportLocation;
-      setSubmitError(null);
-      setReportForm((current) => ({
-        ...current,
-        locationText: current.locationText || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-      }));
-      setReportModalOpen(true);
-    }
+    setReportModalOpen(true);
   };
 
   const handleSelectLost = () => {
-  setSelectionModalOpen(false); // Cierra el menú de selección
-  setLostReportModalOpen(true); // Abre el formulario de mascota perdida
-};
-
-
-
-  const handleMapClick = (coordinates: [number, number]) => {
-    openReportModalAt(coordinates);
-  };
-
-  const handleCreateReport = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!reportLocation) {
-      setSubmitError("Selecciona una ubicacion en el mapa antes de guardar.");
-      return;
-    }
-
-    setSavingPet(true);
-    setSubmitError(null);
-
-    try {
-      const response = await fetch("/api/found-pets", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          pet: {
-            name: reportForm.name,
-            species: reportForm.species,
-            breed: reportForm.breed,
-            imageUrl: reportForm.imageUrl,
-            description: reportForm.description,
-            locationText: reportForm.locationText,
-            latitude: reportLocation[0],
-            longitude: reportLocation[1],
-          },
-          finder: {
-            fullName: reportForm.ownerName,
-            phone: reportForm.ownerPhone,
-            email: reportForm.ownerEmail,
-          },
-        }),
-      });
-
-      const payload = (await response.json()) as { pet: ApiFoundPet } | { message: string };
-
-      if (!response.ok || !("pet" in payload)) {
-        const message = "message" in payload ? payload.message : "Error guardando el reporte.";
-        throw new Error(message);
-      }
-
-      const uiPet = mapApiPetToUiPet(payload.pet);
-      setDbPets((current) => [uiPet, ...current]);
-      setSelectedPet(uiPet);
-      setModalOpen(true);
-      setReportModalOpen(false);
-      setReportLocation(null);
-      setReportForm(defaultReportForm);
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : "No se pudo guardar el reporte en este momento.",
-      );
-    } finally {
-      setSavingPet(false);
-    }
-  };
-
-  const handleReportFormChange = (field: keyof ReportFormState, value: string) => {
-    setReportForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setReportType("lost");
+    setSelectionModalOpen(false);
+    setReportModalOpen(true);
   };
 
   const handleFilterChange = (field: keyof FiltersState, value: string) => {
@@ -210,6 +115,24 @@ export function HomeScreen() {
       ...current,
       [field]: value,
     }));
+  };
+
+  const handleReportSuccess = (payload: unknown) => {
+    setReportLocation(null);
+
+    if (
+      reportType === "found" &&
+      payload &&
+      typeof payload === "object" &&
+      "pet" in payload
+    ) {
+      const response = payload as { pet: ApiFoundPet };
+      const uiPet = mapApiPetToUiPet(response.pet);
+
+      setDbPets((current) => [uiPet, ...current]);
+      setSelectedPet(uiPet);
+      setModalOpen(true);
+    }
   };
 
   return (
@@ -238,30 +161,20 @@ export function HomeScreen() {
         />
       </div>
 
-     {/* Menú de selección (Encontrada vs Perdida) */}
-     <SelectedReportPetModal
-      open={selectionModalOpen}
-      onClose={() => setSelectionModalOpen(false)}
-      onSelectFound={handleSelectFound}
-      onSelectLost={handleSelectLost}
-     />
+      <SelectedReportPetModal
+        open={selectionModalOpen}
+        onClose={() => setSelectionModalOpen(false)}
+        onSelectFound={handleSelectFound}
+        onSelectLost={handleSelectLost}
+      />
 
       <ReportPetModal
         open={reportModalOpen}
+        type={reportType}
         reportLocation={reportLocation}
-        reportForm={reportForm}
-        submitError={submitError}
-        savingPet={savingPet}
         onClose={() => setReportModalOpen(false)}
-        onSubmit={handleCreateReport}
-        onFormChange={handleReportFormChange}
+        onSuccess={handleReportSuccess}
       />
-
-      <LostPetModal
-      open={lostReportModalOpen}
-      onClose={() => setLostReportModalOpen(false)}
-      reportLocation={reportLocation}
-     />
 
       <PetDetailsModal
         pet={selectedPet}
