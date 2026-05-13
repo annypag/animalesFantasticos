@@ -50,11 +50,12 @@ interface PetsMapProps {
 
 export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMapProps) {
   return (
-    <div className="hidden flex-1 md:block">
+    <div className="absolute inset-0 z-0">
       <MapContainer
         center={[-34.5875, -58.42]}
         zoom={13}
-        className="h-full w-full"
+        className="h-full w-full z-0"
+        style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
         <MapClickCapture onMapClick={onMapClick} />
