@@ -9,6 +9,7 @@ import type {
 } from "../types/types";
 import { ReportLocationMap } from "./report-location-map";
 
+
 type ReportPetFormProps = {
   type: ReportType;
   form: ReportPetFormState;

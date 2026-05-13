@@ -7,6 +7,7 @@ import {
 } from "../types/types";
 import { validatePetReport } from "../lib/report-validation";
 import { createPetReport } from "../lib/report-api";
+import { getReverseGeocodingLocation, ReverseGeocodingLocation } from "../lib/geocoding-api";
 
 type UseReportPetFormParams = {
   type: ReportType;
@@ -24,6 +25,13 @@ export function useReportPetForm({
   const [coordinates, setCoordinates] = useState<[number, number] | null>(
     initialLocation,
   );
+
+  const [locationData, setLocationData] =
+    useState<ReverseGeocodingLocation | null>(null);
+
+  const [resolvingLocation, setResolvingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
 
   const [errors, setErrors] = useState<ReportPetErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -53,6 +61,70 @@ export function useReportPetForm({
     }));
   }, [initialLocation]);
 
+  useEffect(() => {
+    if (!coordinates) {
+      setLocationData(null);
+      setLocationError(null);
+      return;
+    }
+
+    const [latitude, longitude] = coordinates;
+    const fallbackLocationText = formatCoordinatesText(coordinates);
+
+    const controller = new AbortController();
+
+    const resolveLocation = async () => {
+      setResolvingLocation(true);
+      setLocationError(null);
+
+      try {
+        const location = await getReverseGeocodingLocation(
+          latitude,
+          longitude,
+          controller.signal,
+        );
+
+        setLocationData(location);
+
+        setForm((current) => ({
+          ...current,
+          locationText: location.displayName || fallbackLocationText,
+        }));
+
+        setErrors((current) => ({
+          ...current,
+          coordinates: undefined,
+          locationText: undefined,
+        }));
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        console.error("No se pudo resolver la ubicación:", error);
+
+        setLocationData(null);
+        setLocationError("No se pudo obtener la dirección automáticamente.");
+
+        setForm((current) => ({
+          ...current,
+          locationText: current.locationText || fallbackLocationText,
+        }));
+      } finally {
+        if (!controller.signal.aborted) {
+          setResolvingLocation(false);
+        }
+      }
+    };
+
+    resolveLocation();
+
+    return () => {
+      controller.abort();
+    };
+  }, [coordinates]);
+
+
   const changeField = <T extends keyof ReportPetFormState>(
     field: T,
     value: ReportPetFormState[T],
@@ -76,6 +148,9 @@ export function useReportPetForm({
       locationText: formatCoordinatesText(nextCoordinates),
     }));
 
+    setLocationData(null);
+    setLocationError(null);
+
     setErrors((current) => ({
       ...current,
       coordinates: undefined,
@@ -86,6 +161,9 @@ export function useReportPetForm({
   const reset = () => {
     setForm(defaultReportPetForm);
     setCoordinates(initialLocation);
+    setLocationData(null);
+    setLocationError(null);
+    setResolvingLocation(false);
     setErrors({});
     setSubmitError(null);
     setSaving(false);
@@ -130,6 +208,9 @@ export function useReportPetForm({
   return {
     form,
     coordinates,
+    locationData,
+    resolvingLocation,
+    locationError,
     errors,
     submitError,
     saving,
