@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { mockPets } from "@/features/home/data/mock-pets";
 import { FiltersBar } from "@/features/home/components/filters-bar";
 import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
@@ -11,6 +11,7 @@ import { ApiFoundPet, FiltersState, Pet } from "@/features/home/types";
 import { SelectedReportPetModal } from "@/features/home/components/selected-report-pet-modal";
 import { ReportPetModal } from "@/features/report/components/report-pet-modal";
 import type { ReportType } from "@/features/report/types/types";
+import { Resizer } from "@/features/home/components/resizer";
 
 export function HomeScreen() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -25,6 +26,10 @@ export function HomeScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
+
+  // === LÓGICA DEL RESIZER ===
+  const [sidebarWidth, setSidebarWidth] = useState(450); // Ancho inicial en pixels
+  const isDragging = useRef(false);
 
   const [filters, setFilters] = useState<FiltersState>({
     species: "all",
@@ -81,6 +86,53 @@ export function HomeScreen() {
       active = false;
     };
   }, []);
+
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      
+      // Evitamos que se seleccione texto accidentalmente mientras se arrastra
+      e.preventDefault(); 
+      
+      // Definimos los límites (ancho mínimo 320px, máximo 60% de la pantalla)
+      const newWidth = e.clientX;
+      const minWidth = 320;
+      const maxWidth = window.innerWidth * 0.6;
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        setSidebarWidth(newWidth);
+        // Forzamos a Leaflet a re-calcular su tamaño en tiempo real
+        window.dispatchEvent(new Event("resize"));
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = "default";
+      document.body.style.userSelect = "auto";
+      
+     setTimeout(() => window.dispatchEvent(new Event("resize")), 50); 
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const handleMouseDown = () => {
+    isDragging.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+  // === FIN LÓGICA DEL RESIZER ===
+
+  
+
 
   const filteredPets = useMemo(() => [...dbPets, ...mockPets], [dbPets]);
 
@@ -145,20 +197,32 @@ export function HomeScreen() {
         onFilterChange={handleFilterChange}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <PetsList
-          pets={filteredPets}
-          selectedPetId={selectedPet?.id}
-          loadingDbPets={loadingDbPets}
-          onPetSelect={handlePetSelect}
-        />
+     <div className="flex flex-1 overflow-hidden">
+        {/* Contenedor del listado con ancho dinámico */}
+        <div 
+          style={{ width: `${sidebarWidth}px` }} 
+          className="flex flex-col flex-shrink-0 relative overflow-hidden"
+        >
+          <PetsList
+            pets={filteredPets}
+            selectedPetId={selectedPet?.id}
+            loadingDbPets={loadingDbPets}
+            onPetSelect={handlePetSelect}
+          />
+        </div>
 
-        <PetsMap
-          pets={filteredPets}
-          onMapClick={handleMapClick}
-          onMarkerClick={handleMarkerClick}
-          onPetSelect={handlePetSelect}
-        />
+       {/* Separador arrastrable */}
+        <Resizer onMouseDown={handleMouseDown} />
+
+        {/* Contenedor del Mapa: "relative" es obligatorio para que funcione el "absolute" interno */}
+        <div className="flex-1 relative min-w-0 bg-secondary/10">
+          <PetsMap
+            pets={filteredPets}
+            onMapClick={handleMapClick}
+            onMarkerClick={handleMarkerClick}
+            onPetSelect={handlePetSelect}
+          />
+        </div>
       </div>
 
       <SelectedReportPetModal

@@ -14,8 +14,14 @@ interface PetsListProps {
 
 export function PetsList({ pets, selectedPetId, loadingDbPets, onPetSelect }: PetsListProps) {
   return (
-    <div className="w-full overflow-y-auto border-r bg-secondary/20 md:w-2/5 lg:w-1/3">
-      <div className="grid gap-4 p-4 sm:grid-cols-2 md:grid-cols-1">
+    // 1. Quitamos w-full, md:w-2/5 y lg:w-1/3 porque ahora el ancho lo controla el componente padre (home-screen).
+    // Le decimos que ocupe todo el ancho y alto que le dejen disponible (h-full w-full)
+    <div className="h-full w-full overflow-y-auto border-r bg-secondary/20">
+      
+      {/* 2. Aplicamos la grilla mágica (auto-fill). 
+          minmax(240px, 1fr) asegura que las tarjetas tengan mínimo 240px de ancho y, 
+          si hay espacio, se crearán más columnas automáticamente. */}
+      <div className="grid gap-4 p-4 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
         {pets.map((pet) => (
           <article
             key={pet.id}
@@ -29,7 +35,7 @@ export function PetsList({ pets, selectedPetId, loadingDbPets, onPetSelect }: Pe
                 src={pet.image}
                 alt={pet.name}
                 fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 40vw, 30vw"
+                sizes="(max-width: 768px) 100vw, 300px"
                 unoptimized
                 className="h-full w-full object-cover transition-transform hover:scale-105"
               />
