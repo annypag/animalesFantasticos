@@ -24,6 +24,13 @@ const defaultReportForm: ReportFormState = {
   ownerEmail: "",
 };
 
+const defaultFilters: FiltersState = {
+  status: "all",
+  species: "all",
+  size: "all",
+  date: "all",
+};
+
 function matchesDateFilter(createdAt: string | undefined, dateFilter: string): boolean {
   if (dateFilter === "all") {
     return true;
@@ -72,12 +79,7 @@ export function HomeScreen() {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FiltersState>({
-    status: "all",
-    species: "all",
-    size: "all",
-    date: "all",
-  });
+  const [filters, setFilters] = useState<FiltersState>(defaultFilters);
   const [reportForm, setReportForm] = useState<ReportFormState>(defaultReportForm);
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
   const [lostReportModalOpen, setLostReportModalOpen] = useState(false);
@@ -260,14 +262,20 @@ export function HomeScreen() {
     }));
   };
 
+  const hasActiveFilters = Object.entries(filters).some(
+    ([field, value]) => value !== defaultFilters[field as keyof FiltersState],
+  );
+
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-background">
       <FiltersBar
         showFilters={showFilters}
         filters={filters}
         petCount={filteredPets.length}
+        hasActiveFilters={hasActiveFilters}
         onToggle={() => setShowFilters((current) => !current)}
         onFilterChange={handleFilterChange}
+        onClearFilters={() => setFilters(defaultFilters)}
       />
 
       <div className="flex flex-1 overflow-hidden">

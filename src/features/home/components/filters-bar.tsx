@@ -7,16 +7,20 @@ interface FiltersBarProps {
   showFilters: boolean;
   filters: FiltersState;
   petCount: number;
+  hasActiveFilters: boolean;
   onToggle: () => void;
   onFilterChange: (field: keyof FiltersState, value: string) => void;
+  onClearFilters: () => void;
 }
 
 export function FiltersBar({
   showFilters,
   filters,
   petCount,
+  hasActiveFilters,
   onToggle,
   onFilterChange,
+  onClearFilters,
 }: FiltersBarProps) {
   return (
     <div className="border-b bg-white px-4 py-3">
@@ -72,6 +76,15 @@ export function FiltersBar({
                 <option value="week">Esta semana</option>
                 <option value="month">Este mes</option>
               </select>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={onClearFilters}
+                  className="inline-flex h-9 items-center rounded-full border border-border bg-white px-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  Limpiar filtros
+                </button>
+              )}
             </div>
           )}
         </div>
