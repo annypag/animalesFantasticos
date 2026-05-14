@@ -1,6 +1,7 @@
 export interface Pet {
   id: string;
   name: string;
+  status: "lost" | "found";
   species: string;
   breed: string;
   size?: string;
@@ -33,6 +34,7 @@ export interface ApiFoundPet {
 }
 
 export interface FiltersState {
+  status: string;
   species: string;
   size: string;
   date: string;

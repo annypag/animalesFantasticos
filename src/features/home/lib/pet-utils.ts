@@ -4,6 +4,7 @@ export function mapApiPetToUiPet(apiPet: ApiFoundPet): Pet {
   return {
     id: `db-${apiPet.id}`,
     name: apiPet.name,
+    status: "found",
     species: apiPet.species,
     breed: apiPet.breed,
     image: apiPet.imageUrl,

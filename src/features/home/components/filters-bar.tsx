@@ -7,16 +7,20 @@ interface FiltersBarProps {
   showFilters: boolean;
   filters: FiltersState;
   petCount: number;
+  hasActiveFilters: boolean;
   onToggle: () => void;
   onFilterChange: (field: keyof FiltersState, value: string) => void;
+  onClearFilters: () => void;
 }
 
 export function FiltersBar({
   showFilters,
   filters,
   petCount,
+  hasActiveFilters,
   onToggle,
   onFilterChange,
+  onClearFilters,
 }: FiltersBarProps) {
   return (
     <div className="border-b bg-white px-4 py-3">
@@ -35,13 +39,22 @@ export function FiltersBar({
           {showFilters && (
             <div className="flex flex-wrap gap-2">
               <select
+                value={filters.status}
+                onChange={(event) => onFilterChange("status", event.target.value)}
+                className="h-9 rounded-full border border-border bg-white px-3 text-sm"
+              >
+                <option value="all">Todas</option>
+                <option value="lost">Perdidas</option>
+                <option value="found">Encontradas</option>
+              </select>
+              <select
                 value={filters.species}
                 onChange={(event) => onFilterChange("species", event.target.value)}
                 className="h-9 rounded-full border border-border bg-white px-3 text-sm"
               >
                 <option value="all">Todas</option>
-                <option value="dog">Perros</option>
-                <option value="cat">Gatos</option>
+                <option value="Perro">Perros</option>
+                <option value="Gato">Gatos</option>
               </select>
               <select
                 value={filters.size}
@@ -63,11 +76,20 @@ export function FiltersBar({
                 <option value="week">Esta semana</option>
                 <option value="month">Este mes</option>
               </select>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={onClearFilters}
+                  className="inline-flex h-9 items-center rounded-full border border-border bg-white px-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                >
+                  Limpiar filtros
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground">{petCount} mascotas perdidas cerca</p>
+        <p className="text-sm text-muted-foreground">{petCount} mascotas cerca</p>
       </div>
     </div>
   );

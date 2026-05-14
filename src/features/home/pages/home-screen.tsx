@@ -1,17 +1,62 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { mockPets } from "@/features/home/data/mock-pets";
 import { FiltersBar } from "@/features/home/components/filters-bar";
 import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
 import { PetsList } from "@/features/home/components/pets-list";
 import { PetsMap } from "@/features/home/components/pets-map";
+import { Resizer } from "@/features/home/components/resizer";
+import { ReportPetModal } from "@/features/report/components/report-pet-modal";
+import { SelectedReportPetModal } from "@/features/home/components/selected-report-pet-modal";
 import { mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
 import { ApiFoundPet, FiltersState, Pet } from "@/features/home/types";
-import { SelectedReportPetModal } from "@/features/home/components/selected-report-pet-modal";
-import { ReportPetModal } from "@/features/report/components/report-pet-modal";
 import type { ReportType } from "@/features/report/types/types";
-import { Resizer } from "@/features/home/components/resizer";
+
+const defaultFilters: FiltersState = {
+  status: "all",
+  species: "all",
+  size: "all",
+  date: "all",
+};
+
+function matchesDateFilter(createdAt: string | undefined, dateFilter: string): boolean {
+  if (dateFilter === "all") {
+    return true;
+  }
+
+  if (!createdAt) {
+    return false;
+  }
+
+  const createdDate = new Date(createdAt);
+
+  if (Number.isNaN(createdDate.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+
+  if (dateFilter === "today") {
+    return createdDate.toDateString() === now.toDateString();
+  }
+
+  if (dateFilter === "week") {
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    return createdDate >= sevenDaysAgo && createdDate <= now;
+  }
+
+  if (dateFilter === "month") {
+    return (
+      createdDate.getFullYear() === now.getFullYear() &&
+      createdDate.getMonth() === now.getMonth()
+    );
+  }
+
+  return true;
+}
 
 export function HomeScreen() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -19,23 +64,15 @@ export function HomeScreen() {
   const [reportLocation, setReportLocation] = useState<[number, number] | null>(
     null,
   );
-
   const [loadingDbPets, setLoadingDbPets] = useState(true);
   const [dbPets, setDbPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FiltersState>(defaultFilters);
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
-
-  // === LÓGICA DEL RESIZER ===
-  const [sidebarWidth, setSidebarWidth] = useState(450); // Ancho inicial en pixels
+  const [sidebarWidth, setSidebarWidth] = useState(450);
   const isDragging = useRef(false);
-
-  const [filters, setFilters] = useState<FiltersState>({
-    species: "all",
-    size: "all",
-    date: "all",
-  });
 
   useEffect(() => {
     import("leaflet").then((L) => {
@@ -87,22 +124,20 @@ export function HomeScreen() {
     };
   }, []);
 
-
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      
-      // Evitamos que se seleccione texto accidentalmente mientras se arrastra
-      e.preventDefault(); 
-      
-      // Definimos los límites (ancho mínimo 320px, máximo 60% de la pantalla)
-      const newWidth = e.clientX;
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isDragging.current) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const newWidth = event.clientX;
       const minWidth = 320;
       const maxWidth = window.innerWidth * 0.6;
 
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         setSidebarWidth(newWidth);
-        // Forzamos a Leaflet a re-calcular su tamaño en tiempo real
         window.dispatchEvent(new Event("resize"));
       }
     };
@@ -111,8 +146,8 @@ export function HomeScreen() {
       isDragging.current = false;
       document.body.style.cursor = "default";
       document.body.style.userSelect = "auto";
-      
-     setTimeout(() => window.dispatchEvent(new Event("resize")), 50); 
+
+      setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -124,17 +159,26 @@ export function HomeScreen() {
     };
   }, []);
 
+  const filteredPets = useMemo(() => {
+    return [...dbPets, ...mockPets].filter((pet) => {
+      const matchesStatus = filters.status === "all" || pet.status === filters.status;
+      const matchesSpecies = filters.species === "all" || pet.species === filters.species;
+      const matchesSize = filters.size === "all" || pet.size === filters.size;
+      const matchesDate = matchesDateFilter(pet.createdAt, filters.date);
+
+      return matchesStatus && matchesSpecies && matchesSize && matchesDate;
+    });
+  }, [dbPets, filters.status, filters.species, filters.size, filters.date]);
+
+  const hasActiveFilters = Object.entries(filters).some(
+    ([field, value]) => value !== defaultFilters[field as keyof FiltersState],
+  );
+
   const handleMouseDown = () => {
     isDragging.current = true;
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   };
-  // === FIN LÓGICA DEL RESIZER ===
-
-  
-
-
-  const filteredPets = useMemo(() => [...dbPets, ...mockPets], [dbPets]);
 
   const handlePetSelect = (pet: Pet) => {
     setSelectedPet(pet);
@@ -193,15 +237,16 @@ export function HomeScreen() {
         showFilters={showFilters}
         filters={filters}
         petCount={filteredPets.length}
+        hasActiveFilters={hasActiveFilters}
         onToggle={() => setShowFilters((current) => !current)}
         onFilterChange={handleFilterChange}
+        onClearFilters={() => setFilters(defaultFilters)}
       />
 
-     <div className="flex flex-1 overflow-hidden">
-        {/* Contenedor del listado con ancho dinámico */}
-        <div 
-          style={{ width: `${sidebarWidth}px` }} 
-          className="flex flex-col flex-shrink-0 relative overflow-hidden"
+      <div className="flex flex-1 overflow-hidden">
+        <div
+          style={{ width: `${sidebarWidth}px` }}
+          className="relative flex flex-shrink-0 flex-col overflow-hidden"
         >
           <PetsList
             pets={filteredPets}
@@ -211,11 +256,9 @@ export function HomeScreen() {
           />
         </div>
 
-       {/* Separador arrastrable */}
         <Resizer onMouseDown={handleMouseDown} />
 
-        {/* Contenedor del Mapa: "relative" es obligatorio para que funcione el "absolute" interno */}
-        <div className="flex-1 relative min-w-0 bg-secondary/10">
+        <div className="relative min-w-0 flex-1 bg-secondary/10">
           <PetsMap
             pets={filteredPets}
             onMapClick={handleMapClick}
