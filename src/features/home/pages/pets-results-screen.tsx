@@ -2,18 +2,17 @@
 
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { FiltersBar } from "@/features/home/components/filters-bar";
 import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
 import { PetsList } from "@/features/home/components/pets-list";
 import { usePetsSearch } from "@/features/home/hooks/use-pets-search";
 import type { Pet } from "@/features/home/types";
-import { AppNavbar } from "@/features/navigation/components/app-navbar";
 
 export function PetsResultsScreen() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
   const {
     filteredPets,
     filters,
@@ -33,7 +32,10 @@ export function PetsResultsScreen() {
   };
 
   const handleBackToMap = () => {
-    router.push("/");
+    const queryString = searchParams.toString();
+    const url = queryString ? `/?${queryString}` : "/";
+
+    router.push(url);
   };
 
   return (

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { mockPets } from "@/features/home/data/mock-pets";
 import { mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
 import type { ApiFoundPet, FiltersState, Pet } from "@/features/home/types";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export const defaultFilters: FiltersState = {
   status: "all",
@@ -12,6 +13,75 @@ export const defaultFilters: FiltersState = {
   size: "all",
   date: "all",
 };
+
+const FILTER_KEYS: Array<keyof FiltersState> = [
+  "status",
+  "species",
+  "size",
+  "date",
+];
+function isValidStatus(value: string | null): FiltersState["status"] {
+  if (value === "lost" || value === "found" || value === "all") {
+    return value;
+  }
+
+  return defaultFilters.status;
+}
+function isValidSpecies(value: string | null): FiltersState["species"] {
+  if (value === "Perro" || value === "Gato" || value === "all") {
+    return value;
+  }
+
+  return defaultFilters.species;
+}
+function isValidSize(value: string | null): FiltersState["size"] {
+  if (
+    value === "small" ||
+    value === "medium" ||
+    value === "large" ||
+    value === "all"
+  ) {
+    return value;
+  }
+
+  return defaultFilters.size;
+}
+function isValidDate(value: string | null): FiltersState["date"] {
+  if (
+    value === "today" ||
+    value === "week" ||
+    value === "month" ||
+    value === "all"
+  ) {
+    return value;
+  }
+
+  return defaultFilters.date;
+}
+function getFiltersFromSearchParams(
+  searchParams: URLSearchParams,
+): FiltersState {
+  return {
+    status: isValidStatus(searchParams.get("status")),
+    species: isValidSpecies(searchParams.get("species")),
+    size: isValidSize(searchParams.get("size")),
+    date: isValidDate(searchParams.get("date")),
+  };
+}
+
+function buildFiltersQueryString(filters: FiltersState): string {
+  const params = new URLSearchParams();
+
+  FILTER_KEYS.forEach((key) => {
+    const value = filters[key];
+
+    if (value !== defaultFilters[key]) {
+      params.set(key, value);
+    }
+  });
+
+  return params.toString();
+}
 
 function matchesDateFilter(
   createdAt: string | undefined,
@@ -54,16 +124,24 @@ function matchesDateFilter(
   return true;
 }
 
-interface UsePetsSearchOptions {
-  initialFilters?: FiltersState;
-}
 
-export function usePetsSearch(options?: UsePetsSearchOptions) {
+export function usePetsSearch() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const initialFilters = useMemo(() => {
+    return getFiltersFromSearchParams(new URLSearchParams(searchParams.toString()));
+  }, [searchParams]);
+
   const [loadingDbPets, setLoadingDbPets] = useState(true);
   const [dbPets, setDbPets] = useState<Pet[]>([]);
-  const [filters, setFilters] = useState<FiltersState>(
-    options?.initialFilters ?? defaultFilters,
-  );
+  const [filters, setFilters] = useState<FiltersState>(initialFilters);
+
+    useEffect(() => {
+    setFilters(initialFilters);
+  }, [initialFilters]);
+
 
   useEffect(() => {
     let active = true;
@@ -102,6 +180,33 @@ export function usePetsSearch(options?: UsePetsSearchOptions) {
     };
   }, []);
 
+  const filtersQueryString = useMemo(() => {
+    return buildFiltersQueryString(filters);
+  }, [filters]);
+   const syncFiltersInUrl = useCallback(
+    (nextFilters: FiltersState) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
+
+      FILTER_KEYS.forEach((key) => {
+        const value = nextFilters[key];
+
+        if (value === defaultFilters[key]) {
+          currentParams.delete(key);
+        } else {
+          currentParams.set(key, value);
+        }
+      });
+
+      const nextQueryString = currentParams.toString();
+      const nextUrl = nextQueryString
+        ? `${pathname}?${nextQueryString}`
+        : pathname;
+
+      router.replace(nextUrl, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+   
   const pets = useMemo(() => {
     return [...dbPets, ...mockPets];
   }, [dbPets]);
@@ -123,22 +228,26 @@ export function usePetsSearch(options?: UsePetsSearchOptions) {
     });
   }, [pets, filters.status, filters.species, filters.size, filters.date]);
 
-  const hasActiveFilters = Object.entries(filters).some(
-    ([field, value]) => value !== defaultFilters[field as keyof FiltersState],
+  const hasActiveFilters = FILTER_KEYS.some(
+    (key) => filters[key] !== defaultFilters[key],
   );
 
   const handleFilterChange = (
     field: keyof FiltersState,
     value: string,
   ) => {
-    setFilters((current) => ({
-      ...current,
+    const nextFilters = {
+      ...filters,
       [field]: value,
-    }));
+    } as FiltersState;
+
+    setFilters(nextFilters);
+    syncFiltersInUrl(nextFilters);
   };
 
   const clearFilters = () => {
     setFilters(defaultFilters);
+    syncFiltersInUrl(defaultFilters);
   };
 
   const addFoundPetFromPayload = (payload: unknown): Pet | null => {
@@ -163,6 +272,7 @@ export function usePetsSearch(options?: UsePetsSearchOptions) {
     dbPets,
     filteredPets,
     filters,
+    filtersQueryString,
     loadingDbPets,
     hasActiveFilters,
     setFilters,

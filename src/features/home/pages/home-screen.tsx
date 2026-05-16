@@ -12,11 +12,9 @@ import { ViewPetsListButton } from "../components/view-pets-list-button";
 import { useRouter } from "next/navigation";
 import { usePetsSearch } from "../hooks/use-pets-search";
 
-
-
-
 export function HomeScreen() {
   const router = useRouter();
+
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportType, setReportType] = useState<ReportType>("found");
   const [reportLocation, setReportLocation] = useState<[number, number] | null>(
@@ -25,9 +23,17 @@ export function HomeScreen() {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
-
+  const {
+    filteredPets,
+    filters,
+    filtersQueryString,
+    loadingDbPets,
+    hasActiveFilters,
+    handleFilterChange,
+    clearFilters,
+    addFoundPetFromPayload,
+  } = usePetsSearch();
   useEffect(() => {
     import("leaflet").then((L) => {
       L.Icon.Default.mergeOptions({
@@ -39,7 +45,6 @@ export function HomeScreen() {
       });
     });
   }, []);
-
 
   const handlePetSelect = (pet: Pet) => {
     setSelectedPet(pet);
@@ -68,16 +73,6 @@ export function HomeScreen() {
   };
 
 
-  const {
-  filteredPets,
-  filters,
-  loadingDbPets,
-  hasActiveFilters,
-  handleFilterChange,
-  clearFilters,
-  addFoundPetFromPayload,
-  } = usePetsSearch();
-
   const handleReportSuccess = (payload: unknown) => {
     setReportLocation(null);
 
@@ -92,7 +87,11 @@ export function HomeScreen() {
     setModalOpen(true);
   };
   const handleViewList = () => {
-    router.push("/pets/results");
+    const url = filtersQueryString
+      ? `/pets/results?${filtersQueryString}`
+      : "/pets/results";
+
+    router.push(url);
   };
 
   return (
