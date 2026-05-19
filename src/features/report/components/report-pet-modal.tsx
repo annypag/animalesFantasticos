@@ -33,44 +33,49 @@ export function ReportPetModal({
     return null;
   }
 
+  const isLost = type === "lost";
+
   const title =
     type === "lost"
       ? "Reportar mascota perdida"
-      : "Reportar mascota encontrada";
-
+      : "¡Encontré una mascota!"
   const subtitle =
     type === "lost"
-      ? "Completá los datos para publicar una alerta de pérdida."
-      : "Completá los datos para publicar una mascota encontrada.";
+      ? "Completá los datos para publicar una alerta."
+      : "¡Gracias! Completá los datos y publica la mascota para que el dueño la encuentre.";
 
   return (
     <div className="fixed inset-0 z-[2200] flex items-center justify-center bg-black/50 p-4">
       <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className={`relative rounded-[1.5rem] border ${isLost ? "border-[var(--alert-orange)]" : "border-primary"} p-4 sm:p-6`}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 z-10 rounded-full bg-gray-100 p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
 
-        <header className="mb-6 pr-10">
-          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        </header>
+          <header
+            className={`mb-6 rounded-xl p-5 pr-14 sm:p-6 sm:pr-16 ${isLost ? "bg-[var(--alert-orange)]" : "bg-primary"}`}
+          >
+            <h2 className="text-2xl font-bold text-white">{title}</h2>
+            <p className="mt-1 text-sm text-white/90">{subtitle}</p>
+          </header>
 
-        <ReportPetForm
-          type={type}
-          form={reportForm.form}
-          coordinates={reportForm.coordinates}
-          errors={reportForm.errors}
-          submitError={reportForm.submitError}
-          saving={reportForm.saving}
-          onFieldChange={reportForm.changeField}
-          onCoordinatesChange={reportForm.changeCoordinates}
-          onSubmit={reportForm.submit}
-          onCancel={onClose}
-        />
+          <ReportPetForm
+            type={type}
+            form={reportForm.form}
+            coordinates={reportForm.coordinates}
+            errors={reportForm.errors}
+            submitError={reportForm.submitError}
+            saving={reportForm.saving}
+            onFieldChange={reportForm.changeField}
+            onCoordinatesChange={reportForm.changeCoordinates}
+            onSubmit={reportForm.submit}
+            onCancel={onClose}
+          />
+        </div>
       </div>
     </div>
   );

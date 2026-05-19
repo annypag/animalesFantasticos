@@ -54,12 +54,11 @@ export function ReportPetForm({
         <h2 className="mb-3 text-lg font-bold">Foto</h2>
 
         <div className="rounded-3xl border border-border bg-white p-4">
-          <label className="mb-2 block text-sm font-medium">URL de imagen</label>
+          <label className="mb-2 block text-sm font-medium">Por favor, sube o copia la url de la imagen de la mascota</label>
 
           <div
-            className={`mb-3 flex h-11 items-center gap-2 rounded-2xl border px-3 ${
-              errors.imageUrl ? "border-red-400" : "border-border"
-            }`}
+            className={`mb-3 flex h-11 items-center gap-2 rounded-2xl border px-3 ${errors.imageUrl ? "border-red-400" : "border-border"
+              }`}
           >
             <Upload className="h-4 w-4 text-muted-foreground" />
 
@@ -171,9 +170,8 @@ export function ReportPetForm({
               <input
                 value={form.name}
                 onChange={(event) => onFieldChange("name", event.target.value)}
-                className={`h-11 w-full rounded-2xl border px-3 ${
-                  errors.name ? "border-red-400" : "border-border"
-                }`}
+                className={`h-11 w-full rounded-2xl border px-3 ${errors.name ? "border-red-400" : "border-border"
+                  }`}
               />
               {errors.name && (
                 <p className="text-xs text-red-500">{errors.name}</p>
@@ -185,9 +183,8 @@ export function ReportPetForm({
               <input
                 value={form.breed}
                 onChange={(event) => onFieldChange("breed", event.target.value)}
-                className={`h-11 w-full rounded-2xl border px-3 ${
-                  errors.breed ? "border-red-400" : "border-border"
-                }`}
+                className={`h-11 w-full rounded-2xl border px-3 ${errors.breed ? "border-red-400" : "border-border"
+                  }`}
               />
               {errors.breed && (
                 <p className="text-xs text-red-500">{errors.breed}</p>
@@ -203,9 +200,8 @@ export function ReportPetForm({
                     onFieldChange("lastSeen", event.target.value)
                   }
                   placeholder="Ej: Hoy a las 15:00"
-                  className={`h-11 w-full rounded-2xl border px-3 ${
-                    errors.lastSeen ? "border-red-400" : "border-border"
-                  }`}
+                  className={`h-11 w-full rounded-2xl border px-3 ${errors.lastSeen ? "border-red-400" : "border-border"
+                    }`}
                 />
                 {errors.lastSeen && (
                   <p className="text-xs text-red-500">{errors.lastSeen}</p>
@@ -221,9 +217,7 @@ export function ReportPetForm({
                 onChange={(event) =>
                   onFieldChange("description", event.target.value)
                 }
-                className={`w-full resize-none rounded-2xl border px-3 py-2 ${
-                  errors.description ? "border-red-400" : "border-border"
-                }`}
+                className={`w-full resize-none rounded-2xl border px-3 py-2 ${errors.description ? "border-red-400" : "border-border"}`}
               />
               {errors.description && (
                 <p className="text-xs text-red-500">{errors.description}</p>
@@ -234,22 +228,23 @@ export function ReportPetForm({
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-bold">Contacto</h2>
+        <h2 className="mb-3 text-lg font-bold"><span className="font-medium">
+          {isLost ? "Contacto del dueño" : "Contacto de la persona que lo encontró"}
+        </span></h2>
 
         <div className="rounded-3xl border border-border bg-white p-4 md:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm sm:col-span-2">
               <span className="font-medium">
-                {isLost ? "Nombre del dueño" : "Persona que encontró"}
+                Nombre
               </span>
               <input
                 value={form.ownerName}
                 onChange={(event) =>
                   onFieldChange("ownerName", event.target.value)
                 }
-                className={`h-11 w-full rounded-2xl border px-3 ${
-                  errors.ownerName ? "border-red-400" : "border-border"
-                }`}
+                className={`h-11 w-full rounded-2xl border px-3 ${errors.ownerName ? "border-red-400" : "border-border"
+                  }`}
               />
               {errors.ownerName && (
                 <p className="text-xs text-red-500">{errors.ownerName}</p>
@@ -263,9 +258,8 @@ export function ReportPetForm({
                 onChange={(event) =>
                   onFieldChange("ownerPhone", event.target.value)
                 }
-                className={`h-11 w-full rounded-2xl border px-3 ${
-                  errors.ownerPhone ? "border-red-400" : "border-border"
-                }`}
+                className={`h-11 w-full rounded-2xl border px-3 ${errors.ownerPhone ? "border-red-400" : "border-border"
+                  }`}
               />
               {errors.ownerPhone && (
                 <p className="text-xs text-red-500">{errors.ownerPhone}</p>
@@ -273,7 +267,7 @@ export function ReportPetForm({
             </label>
 
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Email opcional</span>
+              <span className="font-medium">Email (opcional)</span>
               <input
                 type="email"
                 value={form.ownerEmail}
@@ -308,7 +302,7 @@ export function ReportPetForm({
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+          className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white disabled:opacity-60 ${isLost ? "bg-[var(--alert-orange)]" : "bg-primary"}`}
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {submitLabel ??
