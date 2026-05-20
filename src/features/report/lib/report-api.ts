@@ -1,3 +1,4 @@
+import { resolvePetNameForReport } from "@/features/report/lib/pet-name";
 import { ReportType, ReportPetFormState } from "../types/types";
 
 
@@ -13,6 +14,7 @@ export async function createPetReport({
   coordinates,
 }: CreateReportParams) {
   const [latitude, longitude] = coordinates;
+  const petName = resolvePetNameForReport(form);
 
   const endpoint = type === "found" ? "/api/found-pets" : "/api/lost-pets";
 
@@ -20,7 +22,7 @@ export async function createPetReport({
     type === "found"
       ? {
           pet: {
-            name: form.name,
+            name: petName,
             species: form.species,
             breed: form.breed,
             imageUrl: form.imageUrl,
@@ -37,7 +39,7 @@ export async function createPetReport({
         }
       : {
           pet: {
-            name: form.name,
+            name: petName,
             species: form.species,
             breed: form.breed,
             imageUrl: form.imageUrl,

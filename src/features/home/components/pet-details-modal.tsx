@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Calendar, MapPin, X, User } from "lucide-react";
 import { formatAbsoluteDateTime } from "@/features/home/lib/pet-utils";
 import { Pet } from "@/features/home/types";
-import { ContactModal } from "./contact-modal";
+import { ChatModal } from "@/features/messaging/components/chat-modal";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -25,6 +25,25 @@ const Circle = dynamic(
   { ssr: false },
 );
 
+const MapResizeFix = dynamic(
+  () =>
+    import("react-leaflet").then((mod) => {
+      function MapResizeFixImpl() {
+        const map = mod.useMap();
+
+        useEffect(() => {
+          const timer = window.setTimeout(() => map.invalidateSize(), 100);
+          return () => window.clearTimeout(timer);
+        }, [map]);
+
+        return null;
+      }
+
+      return MapResizeFixImpl;
+    }),
+  { ssr: false },
+);
+
 interface PetDetailsModalProps {
   pet: Pet | null;
   open: boolean;
@@ -33,7 +52,7 @@ interface PetDetailsModalProps {
 
 export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
 
-  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
 
   if (!open || !pet) {
     return null;
@@ -41,7 +60,7 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
 
   // Función para cerrar todo de forma limpia
   const handleClose = () => {
-    setContactModalOpen(false);
+    setChatModalOpen(false);
     onClose();
   };
 
@@ -108,8 +127,9 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
 
           <div className="mb-6">
             <h4 className="mb-3 text-sm font-semibold">Zona de desaparicion</h4>
-            <div className="h-64 w-full overflow-hidden rounded-xl border">
-              <MapContainer center={pet.coordinates} zoom={14} className="h-full w-full" scrollWheelZoom={false}>
+            <div className="relative h-64 w-full overflow-hidden rounded-xl border">
+              <MapContainer center={pet.coordinates} zoom={14} className="z-0 h-full w-full" scrollWheelZoom={false}>
+                <MapResizeFix />
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -131,20 +151,20 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
          {/* BOTON MODIFICADO: Ahora abre el segundo modal y el texto es blanco */}
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => setContactModalOpen(true)}
+                onClick={() => setChatModalOpen(true)}
                 className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-sm font-semibold text-white hover:bg-primary/90"
               >
-                Contactarse
+                Chatear
               </button>
           </div>
         </div>
       </div>
 
       {/* RENDERIZADO DEL NUEVO COMPONENTE EXTERNO */}
-      <ContactModal 
-        open={contactModalOpen} 
-        onClose={() => setContactModalOpen(false)} 
-        pet={pet} 
+      <ChatModal
+        open={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+        pet={pet}
       />
       
     </div>

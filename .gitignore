@@ -36,6 +36,12 @@ yarn-error.log*
 # prisma generated client
 src/generated/prisma/
 
+# uploaded images (keep folders via .gitkeep)
+/public/uploads/chat/*
+!/public/uploads/chat/.gitkeep
+/public/uploads/reports/*
+!/public/uploads/reports/.gitkeep
+
 # vercel
 .vercel
 

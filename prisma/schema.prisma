@@ -57,3 +57,32 @@ model LostPet {
   @@index([createdAt(sort: Desc)], map: "lost_pets_created_at_idx")
   @@map("lost_pets")
 }
+
+enum PetReportKind {
+  FOUND
+  LOST
+}
+
+model Conversation {
+  id        BigInt        @id @default(autoincrement()) @db.BigInt
+  petKind   PetReportKind @map("pet_kind")
+  petId     BigInt        @map("pet_id") @db.BigInt
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  messages  Message[]
+
+  @@unique([petKind, petId], map: "conversations_pet_uid")
+  @@map("conversations")
+}
+
+model Message {
+  id             BigInt       @id @default(autoincrement()) @db.BigInt
+  conversationId BigInt       @map("conversation_id") @db.BigInt
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderName     String       @default("Usuario") @map("sender_name")
+  body           String?
+  imageUrl       String?      @map("image_url")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([conversationId, createdAt(sort: Asc)], map: "messages_conversation_created_idx")
+  @@map("messages")
+}

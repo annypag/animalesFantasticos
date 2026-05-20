@@ -6,6 +6,7 @@ Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, b
 - Boton Reportar Perdida para abrir el mismo formulario.
 - Guardar mascota + persona responsable en base de datos.
 - Ver lo guardado en la lista lateral y como pin en el mapa.
+- Chat básico con envío de imágenes en reportes de DB (base para extender mensajería; ver `src/features/messaging/README.md`).
 
 ## Diagrama MVP
 
