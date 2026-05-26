@@ -10,6 +10,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Login se expone en la ruta /login con src/app/login/page.tsx, pero la pantalla vive en src/features/login/pages/login-screen.tsx.
 - La API /api/found-pets entra por src/app/api/found-pets/route.ts y delega en src/modules/found-pets.
 - La API /api/lost-pets entra por src/app/api/lost-pets/route.ts y delega en src/modules/lost-pets.
+- Mensajería (base mínima, solo imágenes): ver src/features/messaging/README.md; APIs en src/modules/messaging; ChatModal desde detalle de mascota DB.
 - Leaflet CSS se importa en src/app/page.tsx (no en globals.css) por compatibilidad con Tailwind/PostCSS.
 - Leaflet icons usan CDN via L.Icon.Default.mergeOptions para evitar errores de iconUrl en Turbopack.
 - Theme global y variables estan alineados con la referencia en src/app/globals.css.

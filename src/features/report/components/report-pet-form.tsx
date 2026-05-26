@@ -1,7 +1,10 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, Loader2, Upload } from "lucide-react";
+import { ChevronDown, ImagePlus, Loader2 } from "lucide-react";
+import { uploadReportImage } from "@/features/report/lib/report-image-api";
+import { PET_NAME_UNKNOWN } from "@/features/report/lib/pet-name";
 import type {
   ReportPetErrors,
   ReportPetFormState,
@@ -41,6 +44,34 @@ export function ReportPetForm({
   submitLabel,
 }: ReportPetFormProps) {
   const isLost = type === "lost";
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleImageFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setUploadingImage(true);
+    setUploadError(null);
+
+    try {
+      const imageUrl = await uploadReportImage(file);
+      onFieldChange("imageUrl", imageUrl);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "No se pudo subir la imagen.",
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  }
 
   return (
     <form
@@ -54,24 +85,27 @@ export function ReportPetForm({
         <h2 className="mb-3 text-lg font-bold">Foto</h2>
 
         <div className="rounded-3xl border border-border bg-white p-4">
-          <label className="mb-2 block text-sm font-medium">Por favor, sube o copia la url de la imagen de la mascota</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(event) => void handleImageFileChange(event)}
+          />
 
-          <div
-            className={`mb-3 flex h-11 items-center gap-2 rounded-2xl border px-3 ${errors.imageUrl ? "border-red-400" : "border-border"
-              }`}
+          <button
+            type="button"
+            disabled={uploadingImage || saving}
+            onClick={() => fileInputRef.current?.click()}
+            className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-medium hover:bg-accent disabled:opacity-50"
           >
-            <Upload className="h-4 w-4 text-muted-foreground" />
-
-            <input
-              type="url"
-              value={form.imageUrl}
-              onChange={(event) =>
-                onFieldChange("imageUrl", event.target.value)
-              }
-              placeholder="https://..."
-              className="h-full w-full bg-transparent text-sm outline-none"
-            />
-          </div>
+            {uploadingImage ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImagePlus className="h-4 w-4" />
+            )}
+            {uploadingImage ? "Subiendo foto..." : "Elegir foto desde tu dispositivo"}
+          </button>
 
           <div className="flex h-[220px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-secondary/20">
             {form.imageUrl ? (
@@ -85,13 +119,15 @@ export function ReportPetForm({
               />
             ) : (
               <p className="px-4 text-center text-sm text-muted-foreground">
-                Ingresá una URL para ver la vista previa.
+                Todavía no elegiste una foto.
               </p>
             )}
           </div>
 
-          {errors.imageUrl && (
-            <p className="mt-2 text-xs text-red-500">{errors.imageUrl}</p>
+          {(uploadError || errors.imageUrl) && (
+            <p className="mt-2 text-xs text-red-500">
+              {uploadError ?? errors.imageUrl}
+            </p>
           )}
         </div>
       </section>
@@ -165,18 +201,61 @@ export function ReportPetForm({
               </select>
             </label>
 
-            <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Nombre</span>
-              <input
-                value={form.name}
-                onChange={(event) => onFieldChange("name", event.target.value)}
-                className={`h-11 w-full rounded-2xl border px-3 ${errors.name ? "border-red-400" : "border-border"
-                  }`}
-              />
-              {errors.name && (
-                <p className="text-xs text-red-500">{errors.name}</p>
-              )}
-            </label>
+            <div className="space-y-3 sm:col-span-2">
+              <span className="block text-sm font-medium">Nombre de la mascota</span>
+
+              <div className="flex flex-col gap-2">
+                <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-border px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="name-situation"
+                    checked={form.nameSituation === "tag"}
+                    onChange={() => onFieldChange("nameSituation", "tag")}
+                    className="mt-1"
+                  />
+                  <span>
+                    Tiene chapita identificatoria
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Podés cargar el nombre que figure en la chapita.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex cursor-pointer items-start gap-2 rounded-2xl border border-border px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="name-situation"
+                    checked={form.nameSituation === "unknown"}
+                    onChange={() => onFieldChange("nameSituation", "unknown")}
+                    className="mt-1"
+                  />
+                  <span>
+                    No sabemos el nombre
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Se publicará como &quot;{PET_NAME_UNKNOWN}&quot;.
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              {form.nameSituation === "tag" ? (
+                <label className="block space-y-1.5 text-sm">
+                  <span className="font-medium">Nombre en la chapita</span>
+                  <input
+                    value={form.name}
+                    onChange={(event) =>
+                      onFieldChange("name", event.target.value)
+                    }
+                    placeholder="Ej: Rocky"
+                    className={`h-11 w-full rounded-2xl border px-3 ${errors.name ? "border-red-400" : "border-border"
+                      }`}
+                  />
+                  {errors.name && (
+                    <p className="text-xs text-red-500">{errors.name}</p>
+                  )}
+                </label>
+              ) : null}
+            </div>
 
             <label className="space-y-1.5 text-sm">
               <span className="font-medium">Raza</span>

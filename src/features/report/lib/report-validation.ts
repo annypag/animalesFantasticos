@@ -17,8 +17,8 @@ export function validatePetReport({
 }: ValidateParams): ReportPetErrors {
   const errors: ReportPetErrors = {};
 
-  if (!form.name.trim()) {
-    errors.name = "El nombre es obligatorio.";
+  if (form.nameSituation === "tag" && !form.name.trim()) {
+    errors.name = "Ingresá el nombre que figura en la chapita.";
   }
 
   if (!form.breed.trim()) {
@@ -30,7 +30,7 @@ export function validatePetReport({
   }
 
   if (!form.imageUrl.trim()) {
-    errors.imageUrl = "Ingresá una URL de imagen.";
+    errors.imageUrl = "Subí una foto de la mascota.";
   }
 
   if (!form.ownerName.trim()) {
