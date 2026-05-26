@@ -58,6 +58,16 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
     return null;
   }
 
+  const isLost = pet.status === "lost";
+  // CSS para diferenciar encontrado/perdido
+  const badgeClasses = isLost
+    ? "bg-[var(--alert-orange)]/10 text-[var(--alert-orange)] border-[var(--alert-orange)]/20"
+    : "bg-primary/10 text-primary border-primary/20";
+
+  const buttonColorClass = isLost
+    ? "bg-[var(--alert-orange)] hover:bg-[var(--alert-orange)]/90"
+    : "bg-primary hover:bg-primary/90";
+
   // Función para cerrar todo de forma limpia
   const handleClose = () => {
     setChatModalOpen(false);
@@ -88,8 +98,13 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
 
         <div className="p-6">
           <div className="mb-4">
-            <h2 className="text-2xl font-semibold">{pet.name}</h2>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-semibold">{pet.name}</h2>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide border ${badgeClasses}`}>
+                {isLost ? "Perdido" : "Encontrado"}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1.5">
               {pet.species} • {pet.breed}
             </p>
           </div>
@@ -126,7 +141,9 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
           </div>
 
           <div className="mb-6">
-            <h4 className="mb-3 text-sm font-semibold">Zona de desaparicion</h4>
+            <h4 className="mb-3 text-sm font-semibold">
+              {isLost ? "Zona de desaparicion" : "Zona donde se encontró"}
+            </h4>
             <div className="relative h-64 w-full overflow-hidden rounded-xl border">
               <MapContainer center={pet.coordinates} zoom={14} className="z-0 h-full w-full" scrollWheelZoom={false}>
                 <MapResizeFix />
@@ -148,14 +165,14 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
             </div>
           </div>
 
-         {/* BOTON MODIFICADO: Ahora abre el segundo modal y el texto es blanco */}
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={() => setChatModalOpen(true)}
-                className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-sm font-semibold text-white hover:bg-primary/90"
-              >
-                Chatear
-              </button>
+          {/* BOTON MODIFICADO: Ahora abre el segundo modal y el texto es blanco */}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={() => setChatModalOpen(true)}
+              className={`flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold text-white transition-colors ${buttonColorClass}`}
+            >
+              Chatear
+            </button>
           </div>
         </div>
       </div>
@@ -166,11 +183,7 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
         onClose={() => setChatModalOpen(false)}
         pet={pet}
       />
-      
+
     </div>
-    
-    
-   
-    
   );
 }
