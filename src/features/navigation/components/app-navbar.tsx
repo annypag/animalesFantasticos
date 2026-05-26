@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CirclePlus, House, LogOut, PawPrint } from "lucide-react";
+// 1. Agregamos el icono 'User' (o puedes usar 'CircleUser')
+import { CirclePlus, House, LogOut, PawPrint, User } from "lucide-react"; 
 
+// 2. Agregamos el nuevo objeto al arreglo navItems
 const navItems = [
   {
     href: "/",
@@ -14,6 +16,11 @@ const navItems = [
     href: "/nuevoReporte",
     label: "Nuevo reporte",
     icon: CirclePlus,
+  },
+  {
+    href: "/profile",
+    label: "Mi Perfil",
+    icon: User,
   },
   {
     href: "/login",
@@ -27,6 +34,7 @@ export function AppNavbar() {
 
   return (
     <>
+      {/* Navbar Desktop */}
       <nav className="hidden w-full border-b border-border bg-white shadow-sm md:block">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-4 py-3 md:px-6">
           <Link href="/" className="flex items-center gap-3">
@@ -63,8 +71,10 @@ export function AppNavbar() {
         </div>
       </nav>
 
+      {/* Navbar Mobile */}
       <nav className="fixed inset-x-0 bottom-0 z-[1300] border-t border-border bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-3 px-2 py-2 safe-bottom">
+        {/* 3. Cambiamos grid-cols-3 a grid-cols-4 para los 4 botones */}
+        <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2 safe-bottom">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;

@@ -8,16 +8,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Owner {
-  id        BigInt    @id @default(autoincrement()) @db.BigInt
-  fullName  String    @map("full_name")
-  phone     String
-  email     String?
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  foundPets FoundPet[]
-  lostPets  LostPet[]
+model User {
+  id           BigInt     @id @default(autoincrement()) @db.BigInt
+  fullName     String     @map("full_name")
+  email        String     @unique // ¡Importante para el login!
+  phone        String?
+  passwordHash String     @map("password_hash")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  // Relaciones: Un usuario puede tener muchos reportes
+  foundPets    FoundPet[]
+  lostPets     LostPet[]
 
-  @@map("owners")
+  @@map("users")
 }
 
 model FoundPet {
@@ -41,32 +45,37 @@ model FoundPet {
   isRegisteredReporter Boolean           @default(false) @map("is_registered_reporter")
   emailVerified        Boolean           @default(false) @map("email_verified")
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           BigInt   @id @default(autoincrement()) @db.BigInt
+  userId       BigInt   @map("user_id") @db.BigInt // Cambiado de owner_id a user_id
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  species      String
+  breed        String
+  imageUrl     String   @map("image_url")
+  description  String
+  locationText String   @map("location_text")
+  latitude     Float
+  longitude    Float
+  foundAt      DateTime @default(now()) @map("found_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([createdAt(sort: Desc)], map: "found_pets_created_at_idx")
   @@map("found_pets")
 }
 
 model LostPet {
-  id                   BigInt            @id @default(autoincrement()) @db.BigInt
-  ownerId              BigInt            @map("owner_id") @db.BigInt
-  owner                Owner             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  name                 String
-  sex                  PetSex            @default(UNKNOWN)
-  species              String
-  breed                String
-  imageUrl             String            @map("image_url")
-  imageUrls            Json              @default("[]") @map("image_urls")
-  description          String
-  locationText         String            @map("location_text")
-  neighborhood         String            @default("Sin barrio")
-  latitude             Float
-  longitude            Float
-  lastSeen             String            @map("last_seen")
-  reportDate           DateTime          @default(now()) @map("report_date") @db.Timestamptz(6)
-  publicationStatus    PublicationStatus @default(PENDING_VERIFICATION) @map("publication_status")
-  isRegisteredReporter Boolean           @default(false) @map("is_registered_reporter")
-  emailVerified        Boolean           @default(false) @map("email_verified")
-  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           BigInt   @id @default(autoincrement()) @db.BigInt
+  ownerId      BigInt   @map("owner_id") @db.BigInt
+  owner        Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  species      String
+  breed        String
+  imageUrl     String   @map("image_url")
+  description  String
+  locationText String   @map("location_text")
+  latitude     Float
+  longitude    Float
+  lastSeen     String   @map("last_seen") // Usamos String porque en el modal lo capturamos como texto libre ("Hoy a las 15:00 hrs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([createdAt(sort: Desc)], map: "lost_pets_created_at_idx")
   @@map("lost_pets")
