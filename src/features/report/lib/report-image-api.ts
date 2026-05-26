@@ -1,4 +1,8 @@
-export async function uploadReportImage(file: File): Promise<string> {
+import { ImageCapture } from "@/features/report/types/types";
+
+export async function uploadReportImage(
+  file: File,
+): Promise<{ imageUrl: string; imageCapture: ImageCapture }> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -18,6 +22,10 @@ export async function uploadReportImage(file: File): Promise<string> {
     throw new Error(message);
   }
 
-  const payload = (await response.json()) as { imageUrl: string };
-  return payload.imageUrl;
+  const payload = (await response.json()) as {
+    imageUrl: string;
+    imageCapture: ImageCapture;
+  };
+
+  return payload;
 }

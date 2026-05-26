@@ -1,11 +1,10 @@
 import { resolvePetNameForReport } from "@/features/report/lib/pet-name";
 import { ReportType, ReportPetFormState } from "../types/types";
 
-
 type CreateReportParams = {
   type: ReportType;
   form: ReportPetFormState;
-  coordinates: [number, number];
+  coordinates: [number, number] | null;
 };
 
 export async function createPetReport({
@@ -13,10 +12,11 @@ export async function createPetReport({
   form,
   coordinates,
 }: CreateReportParams) {
-  const [latitude, longitude] = coordinates;
+  const [latitude, longitude] = coordinates ?? [0, 0];
   const petName = resolvePetNameForReport(form);
 
   const endpoint = type === "found" ? "/api/found-pets" : "/api/lost-pets";
+  const breedLabel = form.breed.join(", ");
 
   const body =
     type === "found"
@@ -24,35 +24,51 @@ export async function createPetReport({
           pet: {
             name: petName,
             species: form.species,
-            breed: form.breed,
+            sex: form.sex,
+            breed: breedLabel,
             imageUrl: form.imageUrl,
+            imageCapture: form.imageCapture,
             description: form.description,
             locationText: form.locationText,
+            neighborhood: form.neighborhood,
             latitude,
             longitude,
+            reportDate: form.eventDate,
           },
           finder: {
             fullName: form.ownerName,
             phone: form.ownerPhone,
             email: form.ownerEmail,
           },
+          reporter: {
+            isRegistered: form.reporterIsRegistered,
+            emailVerified: form.reporterEmailVerified,
+          },
         }
       : {
           pet: {
             name: petName,
             species: form.species,
-            breed: form.breed,
+            sex: form.sex,
+            breed: breedLabel,
             imageUrl: form.imageUrl,
+            imageCapture: form.imageCapture,
             description: form.description,
-            lastSeen: form.lastSeen,
+            lastSeen: form.eventDate,
             locationText: form.locationText,
+            neighborhood: form.neighborhood,
             latitude,
             longitude,
+            reportDate: form.eventDate,
           },
           owner: {
             fullName: form.ownerName,
             phone: form.ownerPhone,
             email: form.ownerEmail,
+          },
+          reporter: {
+            isRegistered: form.reporterIsRegistered,
+            emailVerified: form.reporterEmailVerified,
           },
         };
 

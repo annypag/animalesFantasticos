@@ -3,6 +3,7 @@ export interface Pet {
   name: string;
   status: "lost" | "found";
   species: string;
+  sex?: string;
   breed: string;
   size?: string;
   image: string;
@@ -19,6 +20,7 @@ export interface Pet {
 export interface ApiFoundPet {
   id: number;
   name: string;
+  sex: string;
   species: string;
   breed: string;
   imageUrl: string;
@@ -36,6 +38,7 @@ export interface ApiFoundPet {
 export interface ApiLostPet {
   id: number;
   name: string;
+  sex: string;
   species: string;
   breed: string;
   imageUrl: string;

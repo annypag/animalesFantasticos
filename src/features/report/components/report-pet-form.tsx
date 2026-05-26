@@ -2,16 +2,23 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, ImagePlus, Loader2 } from "lucide-react";
+import { ChevronDown, ImagePlus, Loader2, X } from "lucide-react";
 import { uploadReportImage } from "@/features/report/lib/report-image-api";
 import { PET_NAME_UNKNOWN } from "@/features/report/lib/pet-name";
 import type {
+  PetBreedOption,
   ReportPetErrors,
   ReportPetFormState,
   ReportType,
 } from "../types/types";
 import { ReportLocationMap } from "./report-location-map";
 
+const BREED_OPTIONS: PetBreedOption[] = [
+  "Labrador",
+  "Mestizo",
+  "Caniche",
+  "Desconocido",
+];
 
 type ReportPetFormProps = {
   type: ReportType;
@@ -29,6 +36,25 @@ type ReportPetFormProps = {
   onCancel?: () => void;
   submitLabel?: string;
 };
+
+function requiredLabel(label: string) {
+  return (
+    <>
+      {label} <span className="text-red-500">*</span>
+    </>
+  );
+}
+
+function formatDateInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) {
+    return digits;
+  }
+  if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
 
 export function ReportPetForm({
   type,
@@ -62,8 +88,9 @@ export function ReportPetForm({
     setUploadError(null);
 
     try {
-      const imageUrl = await uploadReportImage(file);
-      onFieldChange("imageUrl", imageUrl);
+      const upload = await uploadReportImage(file);
+      onFieldChange("imageUrl", upload.imageUrl);
+      onFieldChange("imageCapture", [...form.imageCapture, upload.imageCapture]);
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : "No se pudo subir la imagen.",
@@ -71,6 +98,12 @@ export function ReportPetForm({
     } finally {
       setUploadingImage(false);
     }
+  }
+
+  function removeImageCapture(id: string) {
+    const next = form.imageCapture.filter((image) => image.id !== id);
+    onFieldChange("imageCapture", next);
+    onFieldChange("imageUrl", next[0]?.fileUrl ?? "");
   }
 
   return (
@@ -104,25 +137,51 @@ export function ReportPetForm({
             ) : (
               <ImagePlus className="h-4 w-4" />
             )}
-            {uploadingImage ? "Subiendo foto..." : "Elegir foto desde tu dispositivo"}
+            {uploadingImage ? "Subiendo foto..." : "Adjuntar foto"}
           </button>
 
-          <div className="flex h-[220px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-secondary/20">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Podes adjuntar varias fotos. Mientras mas fotos, mejor precision de matching.
+          </p>
+
+          <div className="relative h-[220px] overflow-hidden rounded-2xl border border-dashed border-border bg-secondary/20 p-3">
             {form.imageUrl ? (
               <Image
                 src={form.imageUrl}
                 alt="Vista previa de mascota"
-                width={800}
-                height={520}
+                fill
                 unoptimized
-                className="h-full w-full object-cover"
+                sizes="(max-width: 768px) 100vw, 600px"
+                className="object-contain"
               />
             ) : (
-              <p className="px-4 text-center text-sm text-muted-foreground">
-                Todavía no elegiste una foto.
-              </p>
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                Todavia no elegiste una foto.
+              </div>
             )}
           </div>
+
+          {form.imageCapture.length > 0 && (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {form.imageCapture.map((image) => (
+                <div
+                  key={image.id}
+                  className="flex items-center justify-between rounded-xl border border-border bg-secondary/20 px-2 py-1 text-xs"
+                  title={image.fileName}
+                >
+                  <span className="truncate">{image.fileName}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeImageCapture(image.id)}
+                    className="ml-2 rounded p-1 text-red-500 hover:bg-red-50"
+                    aria-label="Descartar imagen"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {(uploadError || errors.imageUrl) && (
             <p className="mt-2 text-xs text-red-500">
@@ -133,7 +192,7 @@ export function ReportPetForm({
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-bold">Ubicación</h2>
+        <h2 className="mb-3 text-lg font-bold">Ubicacion</h2>
 
         <div className="rounded-3xl border border-border bg-white p-4">
           <ReportLocationMap
@@ -143,7 +202,7 @@ export function ReportPetForm({
           />
 
           <label className="mt-4 block space-y-1.5 text-sm">
-            <span className="font-medium">Dirección o referencia</span>
+            <span className="font-medium">Direccion o referencia</span>
             <input
               value={form.locationText}
               onChange={(event) =>
@@ -152,6 +211,21 @@ export function ReportPetForm({
               placeholder="Ej: Av. Santa Fe 2400"
               className="h-11 w-full rounded-2xl border border-border px-3"
             />
+          </label>
+
+          <label className="mt-4 block space-y-1.5 text-sm">
+            <span className="font-medium">{requiredLabel("Barrio")}</span>
+            <input
+              value={form.neighborhood}
+              onChange={(event) => onFieldChange("neighborhood", event.target.value)}
+              placeholder="Ej: Palermo"
+              className={`h-11 w-full rounded-2xl border px-3 ${
+                errors.neighborhood ? "border-red-400" : "border-border"
+              }`}
+            />
+            {errors.neighborhood && (
+              <p className="text-xs text-red-500">{errors.neighborhood}</p>
+            )}
           </label>
         </div>
       </section>
@@ -162,7 +236,7 @@ export function ReportPetForm({
         <div className="rounded-3xl border border-border bg-white p-4 md:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Especie</span>
+              <span className="font-medium">{requiredLabel("Especie")}</span>
               <div className="relative">
                 <select
                   value={form.species}
@@ -184,7 +258,7 @@ export function ReportPetForm({
             </label>
 
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Tamaño</span>
+              <span className="font-medium">Tamano</span>
               <select
                 value={form.size}
                 onChange={(event) =>
@@ -195,11 +269,74 @@ export function ReportPetForm({
                 }
                 className="h-11 w-full rounded-2xl border border-border bg-white px-3"
               >
-                <option value="Pequeno">Pequeño</option>
+                <option value="Pequeno">Pequeno</option>
                 <option value="Mediano">Mediano</option>
                 <option value="Grande">Grande</option>
               </select>
             </label>
+
+            <label className="space-y-1.5 text-sm">
+              <span className="font-medium">{requiredLabel("Sexo")}</span>
+              <select
+                value={form.sex}
+                onChange={(event) =>
+                  onFieldChange("sex", event.target.value as ReportPetFormState["sex"])
+                }
+                className="h-11 w-full rounded-2xl border border-border bg-white px-3"
+              >
+                <option value="Desconocido">Desconocido</option>
+                <option value="Macho">Macho</option>
+                <option value="Hembra">Hembra</option>
+              </select>
+              {errors.sex && <p className="text-xs text-red-500">{errors.sex}</p>}
+            </label>
+
+            <label className="space-y-1.5 text-sm">
+              <span className="font-medium">
+                {requiredLabel(
+                  isLost ? "Fecha de extravio (dd/mm/yyyy)" : "Fecha de hallazgo (dd/mm/yyyy)",
+                )}
+              </span>
+              <input
+                value={form.eventDate}
+                onChange={(event) =>
+                  onFieldChange("eventDate", formatDateInput(event.target.value))
+                }
+                placeholder="Ej: 25/05/2026"
+                inputMode="numeric"
+                maxLength={10}
+                className={`h-11 w-full rounded-2xl border px-3 ${
+                  errors.eventDate ? "border-red-400" : "border-border"
+                }`}
+              />
+              {errors.eventDate && (
+                <p className="text-xs text-red-500">{errors.eventDate}</p>
+              )}
+            </label>
+
+            <div className="space-y-1.5 text-sm sm:col-span-2">
+              <span className="font-medium">{requiredLabel("Raza")}</span>
+              <select
+                value={form.breed[0] ?? ""}
+                onChange={(event) =>
+                  onFieldChange(
+                    "breed",
+                    event.target.value ? [event.target.value as PetBreedOption] : [],
+                  )
+                }
+                className={`h-11 w-full rounded-2xl border bg-white px-3 ${
+                  errors.breed ? "border-red-400" : "border-border"
+                }`}
+              >
+                <option value="">Seleccionar raza</option>
+                {BREED_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {errors.breed && <p className="text-xs text-red-500">{errors.breed}</p>}
+            </div>
 
             <div className="space-y-3 sm:col-span-2">
               <span className="block text-sm font-medium">Nombre de la mascota</span>
@@ -216,7 +353,7 @@ export function ReportPetForm({
                   <span>
                     Tiene chapita identificatoria
                     <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Podés cargar el nombre que figure en la chapita.
+                      Podes cargar el nombre que figure en la chapita.
                     </span>
                   </span>
                 </label>
@@ -232,7 +369,7 @@ export function ReportPetForm({
                   <span>
                     No sabemos el nombre
                     <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Se publicará como &quot;{PET_NAME_UNKNOWN}&quot;.
+                      Se publicara como &quot;{PET_NAME_UNKNOWN}&quot;.
                     </span>
                   </span>
                 </label>
@@ -240,7 +377,7 @@ export function ReportPetForm({
 
               {form.nameSituation === "tag" ? (
                 <label className="block space-y-1.5 text-sm">
-                  <span className="font-medium">Nombre en la chapita</span>
+                  <span className="font-medium">{requiredLabel("Nombre en la chapita")}</span>
                   <input
                     value={form.name}
                     onChange={(event) =>
@@ -258,41 +395,8 @@ export function ReportPetForm({
               ) : null}
             </div>
 
-            <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Raza</span>
-              <input
-                value={form.breed}
-                onChange={(event) => onFieldChange("breed", event.target.value)}
-                className={`h-11 w-full rounded-2xl border px-3 ${
-                  errors.breed ? "border-red-400" : "border-border"
-                }`}
-              />
-              {errors.breed && (
-                <p className="text-xs text-red-500">{errors.breed}</p>
-              )}
-            </label>
-
-            {isLost && (
-              <label className="space-y-1.5 text-sm sm:col-span-2">
-                <span className="font-medium">Visto por última vez</span>
-                <input
-                  value={form.lastSeen}
-                  onChange={(event) =>
-                    onFieldChange("lastSeen", event.target.value)
-                  }
-                  placeholder="Ej: Hoy a las 15:00"
-                  className={`h-11 w-full rounded-2xl border px-3 ${
-                    errors.lastSeen ? "border-red-400" : "border-border"
-                  }`}
-                />
-                {errors.lastSeen && (
-                  <p className="text-xs text-red-500">{errors.lastSeen}</p>
-                )}
-              </label>
-            )}
-
             <label className="space-y-1.5 text-sm sm:col-span-2">
-              <span className="font-medium">Descripción</span>
+              <span className="font-medium">{requiredLabel("Descripcion")}</span>
               <textarea
                 rows={3}
                 value={form.description}
@@ -318,7 +422,7 @@ export function ReportPetForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm sm:col-span-2">
               <span className="font-medium">
-                {isLost ? "Nombre del dueño" : "Persona que encontró"}
+                {requiredLabel(isLost ? "Nombre del dueno" : "Persona que encontro")}
               </span>
               <input
                 value={form.ownerName}
@@ -335,12 +439,14 @@ export function ReportPetForm({
             </label>
 
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Teléfono</span>
+              <span className="font-medium">{requiredLabel("Telefono")}</span>
               <input
                 value={form.ownerPhone}
                 onChange={(event) =>
                   onFieldChange("ownerPhone", event.target.value)
                 }
+                placeholder="15-0000-0000"
+                inputMode="numeric"
                 className={`h-11 w-full rounded-2xl border px-3 ${
                   errors.ownerPhone ? "border-red-400" : "border-border"
                 }`}
@@ -358,8 +464,14 @@ export function ReportPetForm({
                 onChange={(event) =>
                   onFieldChange("ownerEmail", event.target.value)
                 }
-                className="h-11 w-full rounded-2xl border border-border px-3"
+                placeholder="email@mail.com"
+                className={`h-11 w-full rounded-2xl border px-3 ${
+                  errors.ownerEmail ? "border-red-400" : "border-border"
+                }`}
               />
+              {errors.ownerEmail && (
+                <p className="text-xs text-red-500">{errors.ownerEmail}</p>
+              )}
             </label>
           </div>
         </div>

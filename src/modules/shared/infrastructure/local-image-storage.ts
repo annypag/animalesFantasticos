@@ -21,7 +21,7 @@ const MIME_EXTENSION: Record<string, string> = {
 export async function saveLocalImage(
   file: File,
   folder: "chat" | "reports",
-): Promise<string> {
+): Promise<{ id: string; fileName: string; fileUrl: string }> {
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
     throw new ValidationError("Solo se permiten imágenes JPG, PNG, WEBP o GIF.");
   }
@@ -31,12 +31,17 @@ export async function saveLocalImage(
   }
 
   const extension = MIME_EXTENSION[file.type];
-  const fileName = `${randomUUID()}.${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
+  const id = randomUUID();
+  const fileName = `${id}.${extension}`;
+  const uploadDir = path.join(process.cwd(), "public", "assets", folder);
   await mkdir(uploadDir, { recursive: true });
 
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(uploadDir, fileName), buffer);
 
-  return `/uploads/${folder}/${fileName}`;
+  return {
+    id,
+    fileName,
+    fileUrl: `/assets/${folder}/${fileName}`,
+  };
 }

@@ -1,15 +1,47 @@
 import { NextResponse } from "next/server";
-import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 import { listFoundPets } from "@/modules/found-pets/application/use-cases/list-found-pets";
 import { registerFoundPet } from "@/modules/found-pets/application/use-cases/register-found-pet";
 import { validateRegisterFoundPetPayload } from "@/modules/found-pets/application/validators/register-found-pet";
 import { PrismaFoundPetsRepository } from "@/modules/found-pets/infrastructure/prisma-found-pets-repository";
+import { PrismaMatchingRepository } from "@/modules/matching/infrastructure/prisma-matching-repository";
+import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 
 const repository = new PrismaFoundPetsRepository();
+const matchingRepository = new PrismaMatchingRepository();
 
-export async function handleGetFoundPets() {
+function asOptionalNumber(value: string | null): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function asOptionalDate(value: string | null): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+export async function handleGetFoundPets(request: Request) {
   try {
-    const pets = await listFoundPets(repository);
+    const url = new URL(request.url);
+    const pets = await listFoundPets(repository, {
+      neighborhood: url.searchParams.get("neighborhood") ?? undefined,
+      breed: url.searchParams.get("breed") ?? undefined,
+      fromDate: asOptionalDate(url.searchParams.get("fromDate")),
+      toDate: asOptionalDate(url.searchParams.get("toDate")),
+      minLat: asOptionalNumber(url.searchParams.get("minLat")),
+      maxLat: asOptionalNumber(url.searchParams.get("maxLat")),
+      minLng: asOptionalNumber(url.searchParams.get("minLng")),
+      maxLng: asOptionalNumber(url.searchParams.get("maxLng")),
+      onlyPublished: url.searchParams.get("onlyPublished") === "true",
+    });
+
     return NextResponse.json({ pets }, { status: 200 });
   } catch (error) {
     console.error("GET /api/found-pets failed", error);
@@ -25,6 +57,7 @@ export async function handlePostFoundPets(request: Request) {
     const body = (await request.json()) as unknown;
     const input = validateRegisterFoundPetPayload(body);
     const pet = await registerFoundPet(repository, input);
+    await matchingRepository.enqueue("FOUND", pet.id);
 
     return NextResponse.json({ pet }, { status: 201 });
   } catch (error) {
