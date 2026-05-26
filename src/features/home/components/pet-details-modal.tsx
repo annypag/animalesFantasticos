@@ -156,8 +156,8 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
                   center={pet.coordinates}
                   radius={500}
                   pathOptions={{
-                    color: "#10b981",
-                    fillColor: "#10b981",
+                    color: isLost ? "#f97316" : "#1e40af",
+                    fillColor: isLost ? "#f97316" : "#1e40af",
                     fillOpacity: 0.1,
                   }}
                 />
