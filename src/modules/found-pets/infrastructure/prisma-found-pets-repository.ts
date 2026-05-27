@@ -20,14 +20,11 @@ function mapFoundPetRecord(pet: {
   longitude: number;
   foundAt: Date;
   reportDate: Date;
-  publicationStatus: "PENDING_VERIFICATION" | "PUBLISHED" | "ARCHIVED";
-  emailVerified: boolean;
-  isRegisteredReporter: boolean;
-  owner: {
+  user: {
     id: bigint;
     fullName: string;
-    phone: string;
-    email: string | null;
+    email: string;
+    phone: string | null;
   };
 }): FoundPet {
   const imageCapture = Array.isArray(pet.imageUrls)
@@ -56,14 +53,11 @@ function mapFoundPetRecord(pet: {
     longitude: pet.longitude,
     foundAt: pet.foundAt.toISOString(),
     reportDate: pet.reportDate.toISOString(),
-    publicationStatus: pet.publicationStatus,
-    emailVerified: pet.emailVerified,
-    isRegisteredReporter: pet.isRegisteredReporter,
     owner: {
-      id: Number(pet.owner.id),
-      fullName: pet.owner.fullName,
-      phone: pet.owner.phone,
-      email: pet.owner.email,
+      id: Number(pet.user.id),
+      fullName: pet.user.fullName,
+      phone: pet.user.phone,
+      email: pet.user.email,
     },
   };
 }
@@ -84,7 +78,6 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
   async listFoundPets(filters?: FoundPetFilters): Promise<FoundPet[]> {
     const pets = await prisma.foundPet.findMany({
       where: {
-        ...(filters?.onlyPublished ? { publicationStatus: "PUBLISHED" } : {}),
         ...(filters?.neighborhood
           ? {
               neighborhood: {
@@ -127,7 +120,7 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
           : {}),
       },
       include: {
-        owner: true,
+        user: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -139,17 +132,24 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
 
   async createFoundPet(input: RegisterFoundPetInput): Promise<FoundPet> {
     const createdPet = await prisma.$transaction(async (tx) => {
-      const owner = await tx.owner.create({
-        data: {
+      // Reutiliza el User si el email ya existe; crea uno nuevo si no.
+      // El campo passwordHash queda como placeholder ya que este usuario
+      // es el contacto del reporte, no un usuario de login.
+      const email = input.owner.email ?? `noreply_${Date.now()}@noreply.local`;
+      const user = await tx.user.upsert({
+        where: { email },
+        update: {},
+        create: {
           fullName: input.owner.fullName,
+          email,
           phone: input.owner.phone,
-          email: input.owner.email,
+          passwordHash: "__cannot_login__",
         },
       });
 
       return tx.foundPet.create({
         data: {
-          ownerId: owner.id,
+          userId: user.id,
           name: input.pet.name,
           sex: toSexEnum(input.pet.sex),
           species: input.pet.species,
@@ -158,7 +158,7 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
             input.pet.imageUrl ||
             input.pet.imageCapture[0]?.fileUrl ||
             "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-          imageUrls: input.pet.imageCapture,
+          imageUrls: JSON.parse(JSON.stringify(input.pet.imageCapture)),
           description: input.pet.description,
           locationText:
             input.pet.locationText || `${input.pet.latitude.toFixed(4)}, ${input.pet.longitude.toFixed(4)}`,
@@ -166,12 +166,9 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
           latitude: input.pet.latitude,
           longitude: input.pet.longitude,
           reportDate: input.pet.reportDate,
-          publicationStatus: input.reporter.emailVerified ? "PUBLISHED" : "PENDING_VERIFICATION",
-          isRegisteredReporter: input.reporter.isRegistered,
-          emailVerified: input.reporter.emailVerified,
         },
         include: {
-          owner: true,
+          user: true,
         },
       });
     });
@@ -179,4 +176,3 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
     return mapFoundPetRecord(createdPet);
   }
 }
-

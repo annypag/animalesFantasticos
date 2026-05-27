@@ -8,64 +8,44 @@ import { LostPet, RegisterLostPetInput } from "@/modules/lost-pets/domain/lost-p
 function mapLostPetRecord(pet: {
   id: bigint;
   name: string;
-  sex: "MALE" | "FEMALE" | "UNKNOWN";
   species: string;
   breed: string;
   imageUrl: string;
-  imageUrls: unknown;
   description: string;
   locationText: string;
-  neighborhood: string;
   latitude: number;
   longitude: number;
   lastSeen: string;
-  reportDate: Date;
-  publicationStatus: "PENDING_VERIFICATION" | "PUBLISHED" | "ARCHIVED";
-  emailVerified: boolean;
-  isRegisteredReporter: boolean;
   createdAt: Date;
-  owner: {
+  user: {
     id: bigint;
     fullName: string;
-    phone: string;
-    email: string | null;
+    email: string;
+    phone: string | null;
   };
 }): LostPet {
-  const imageCapture = Array.isArray(pet.imageUrls)
-    ? pet.imageUrls.filter(
-        (value): value is { id: string; fileName: string; fileUrl: string } =>
-          typeof value === "object" &&
-          value !== null &&
-          typeof (value as { id?: unknown }).id === "string" &&
-          typeof (value as { fileName?: unknown }).fileName === "string" &&
-          typeof (value as { fileUrl?: unknown }).fileUrl === "string",
-      )
-    : [];
-
   return {
     id: Number(pet.id),
     name: pet.name,
-    sex: pet.sex === "MALE" ? "Macho" : pet.sex === "FEMALE" ? "Hembra" : "Desconocido",
+    // sex y neighborhood no existen en el schema de LostPet — se usan defaults
+    sex: "Desconocido",
     species: pet.species as LostPet["species"],
     breed: pet.breed,
     imageUrl: pet.imageUrl,
-    imageCapture,
+    imageCapture: [],
     description: pet.description,
     locationText: pet.locationText,
-    neighborhood: pet.neighborhood,
+    neighborhood: "",
     latitude: pet.latitude,
     longitude: pet.longitude,
     lastSeen: pet.lastSeen,
-    reportDate: pet.reportDate.toISOString(),
-    publicationStatus: pet.publicationStatus,
-    emailVerified: pet.emailVerified,
-    isRegisteredReporter: pet.isRegisteredReporter,
+    reportDate: pet.createdAt.toISOString(),
     createdAt: pet.createdAt.toISOString(),
     owner: {
-      id: Number(pet.owner.id),
-      fullName: pet.owner.fullName,
-      phone: pet.owner.phone,
-      email: pet.owner.email,
+      id: Number(pet.user.id),
+      fullName: pet.user.fullName,
+      phone: pet.user.phone,
+      email: pet.user.email,
     },
   };
 }
@@ -86,10 +66,9 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
   async listLostPets(filters?: LostPetFilters): Promise<LostPet[]> {
     const pets = await prisma.lostPet.findMany({
       where: {
-        ...(filters?.onlyPublished ? { publicationStatus: "PUBLISHED" } : {}),
         ...(filters?.neighborhood
           ? {
-              neighborhood: {
+              locationText: {
                 contains: filters.neighborhood,
                 mode: "insensitive",
               },
@@ -105,7 +84,7 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
           : {}),
         ...(filters?.fromDate || filters?.toDate
           ? {
-              reportDate: {
+              createdAt: {
                 ...(filters.fromDate ? { gte: filters.fromDate } : {}),
                 ...(filters.toDate ? { lte: filters.toDate } : {}),
               },
@@ -129,7 +108,7 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
           : {}),
       },
       include: {
-        owner: true,
+        user: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -140,41 +119,43 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
   }
 
   async createLostPet(input: RegisterLostPetInput): Promise<LostPet> {
+    // Nota: el schema de LostPet no incluye sex, imageUrls ni neighborhood todavía.
+    // toSexEnum se mantiene para cuando se agreguen al schema.
+    void toSexEnum;
+
     const createdPet = await prisma.$transaction(async (tx) => {
-      const owner = await tx.owner.create({
-        data: {
+      // Reutiliza el User si el email ya existe; crea uno nuevo si no.
+      const email = input.owner.email ?? `noreply_${Date.now()}@noreply.local`;
+      const user = await tx.user.upsert({
+        where: { email },
+        update: {},
+        create: {
           fullName: input.owner.fullName,
+          email,
           phone: input.owner.phone,
-          email: input.owner.email,
+          passwordHash: "__cannot_login__",
         },
       });
 
       return tx.lostPet.create({
         data: {
-          ownerId: owner.id,
+          userId: user.id,
           name: input.pet.name,
-          sex: toSexEnum(input.pet.sex),
           species: input.pet.species,
           breed: input.pet.breed,
           imageUrl:
             input.pet.imageUrl ||
             input.pet.imageCapture[0]?.fileUrl ||
             "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-          imageUrls: input.pet.imageCapture,
           description: input.pet.description,
           locationText:
             input.pet.locationText || `${input.pet.latitude.toFixed(4)}, ${input.pet.longitude.toFixed(4)}`,
-          neighborhood: input.pet.neighborhood,
           latitude: input.pet.latitude,
           longitude: input.pet.longitude,
           lastSeen: input.pet.lastSeen,
-          reportDate: input.pet.reportDate,
-          publicationStatus: input.reporter.emailVerified ? "PUBLISHED" : "PENDING_VERIFICATION",
-          isRegisteredReporter: input.reporter.isRegistered,
-          emailVerified: input.reporter.emailVerified,
         },
         include: {
-          owner: true,
+          user: true,
         },
       });
     });
@@ -182,4 +163,3 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
     return mapLostPetRecord(createdPet);
   }
 }
-

@@ -3,11 +3,9 @@ import { listFoundPets } from "@/modules/found-pets/application/use-cases/list-f
 import { registerFoundPet } from "@/modules/found-pets/application/use-cases/register-found-pet";
 import { validateRegisterFoundPetPayload } from "@/modules/found-pets/application/validators/register-found-pet";
 import { PrismaFoundPetsRepository } from "@/modules/found-pets/infrastructure/prisma-found-pets-repository";
-import { PrismaMatchingRepository } from "@/modules/matching/infrastructure/prisma-matching-repository";
 import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 
 const repository = new PrismaFoundPetsRepository();
-const matchingRepository = new PrismaMatchingRepository();
 
 function asOptionalNumber(value: string | null): number | undefined {
   if (!value) {
@@ -39,7 +37,6 @@ export async function handleGetFoundPets(request: Request) {
       maxLat: asOptionalNumber(url.searchParams.get("maxLat")),
       minLng: asOptionalNumber(url.searchParams.get("minLng")),
       maxLng: asOptionalNumber(url.searchParams.get("maxLng")),
-      onlyPublished: url.searchParams.get("onlyPublished") === "true",
     });
 
     return NextResponse.json({ pets }, { status: 200 });
@@ -57,7 +54,6 @@ export async function handlePostFoundPets(request: Request) {
     const body = (await request.json()) as unknown;
     const input = validateRegisterFoundPetPayload(body);
     const pet = await registerFoundPet(repository, input);
-    await matchingRepository.enqueue("FOUND", pet.id);
 
     return NextResponse.json({ pet }, { status: 201 });
   } catch (error) {

@@ -26,8 +26,8 @@ model User {
 
 model FoundPet {
   id                   BigInt            @id @default(autoincrement()) @db.BigInt
-  ownerId              BigInt            @map("owner_id") @db.BigInt
-  owner                Owner             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  userId                 BigInt            @map("user_id") @db.BigInt // Cambiado de owner_id a user_id
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                 String
   sex                  PetSex            @default(UNKNOWN)
   species              String
@@ -41,31 +41,16 @@ model FoundPet {
   longitude            Float
   foundAt              DateTime          @default(now()) @map("found_at") @db.Timestamptz(6)
   reportDate           DateTime          @default(now()) @map("report_date") @db.Timestamptz(6)
-  publicationStatus    PublicationStatus @default(PENDING_VERIFICATION) @map("publication_status")
-  isRegisteredReporter Boolean           @default(false) @map("is_registered_reporter")
-  emailVerified        Boolean           @default(false) @map("email_verified")
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  id           BigInt   @id @default(autoincrement()) @db.BigInt
-  userId       BigInt   @map("user_id") @db.BigInt // Cambiado de owner_id a user_id
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  species      String
-  breed        String
-  imageUrl     String   @map("image_url")
-  description  String
-  locationText String   @map("location_text")
-  latitude     Float
-  longitude    Float
-  foundAt      DateTime @default(now()) @map("found_at") @db.Timestamptz(6)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
 
   @@map("found_pets")
 }
 
 model LostPet {
   id           BigInt   @id @default(autoincrement()) @db.BigInt
-  ownerId      BigInt   @map("owner_id") @db.BigInt
-  owner        Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  userId       BigInt   @map("user_id") @db.BigInt // Cambiado de owner_id a user_id
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name         String
   species      String
   breed        String
@@ -81,75 +66,18 @@ model LostPet {
   @@map("lost_pets")
 }
 
+
 enum PetReportKind {
   FOUND
   LOST
 }
-
 enum PetSex {
   MALE
   FEMALE
   UNKNOWN
 }
 
-enum PublicationStatus {
-  PENDING_VERIFICATION
-  PUBLISHED
-  ARCHIVED
-}
 
-model AppUser {
-  id             BigInt                   @id @default(autoincrement()) @db.BigInt
-  email          String                   @unique
-  emailVerified  Boolean                  @default(false) @map("email_verified")
-  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  verifiedAt     DateTime?                @map("verified_at") @db.Timestamptz(6)
-  verifications  EmailVerificationToken[]
-
-  @@map("app_users")
-}
-
-model EmailVerificationToken {
-  id        BigInt   @id @default(autoincrement()) @db.BigInt
-  userId    BigInt   @map("user_id") @db.BigInt
-  user      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
-  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([userId, createdAt(sort: Desc)], map: "verification_tokens_user_idx")
-  @@map("email_verification_tokens")
-}
-
-model MatchJob {
-  id         BigInt        @id @default(autoincrement()) @db.BigInt
-  petKind    PetReportKind @map("pet_kind")
-  petId      BigInt        @map("pet_id") @db.BigInt
-  status     String        @default("PENDING")
-  attempts   Int           @default(0)
-  lastError  String?       @map("last_error")
-  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([status, createdAt], map: "match_jobs_status_created_idx")
-  @@map("match_jobs")
-}
-
-model PetMatch {
-  id             BigInt        @id @default(autoincrement()) @db.BigInt
-  lostPetId      BigInt        @map("lost_pet_id") @db.BigInt
-  foundPetId     BigInt        @map("found_pet_id") @db.BigInt
-  score          Float
-  explanation    String?
-  computedAt     DateTime      @default(now()) @map("computed_at") @db.Timestamptz(6)
-  algorithmLabel String        @default("heuristic-v1") @map("algorithm_label")
-
-  @@unique([lostPetId, foundPetId], map: "pet_matches_pair_uidx")
-  @@index([lostPetId, score(sort: Desc)], map: "pet_matches_lost_score_idx")
-  @@index([foundPetId, score(sort: Desc)], map: "pet_matches_found_score_idx")
-  @@map("pet_matches")
-}
 
 model Conversation {
   id        BigInt        @id @default(autoincrement()) @db.BigInt

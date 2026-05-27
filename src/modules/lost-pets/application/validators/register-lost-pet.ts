@@ -30,10 +30,6 @@ interface RequestPayload {
     phone?: unknown;
     email?: unknown;
   };
-  reporter?: {
-    isRegistered?: unknown;
-    emailVerified?: unknown;
-  };
 }
 
 export function validateRegisterLostPetPayload(payload: unknown): RegisterLostPetInput {
@@ -65,9 +61,6 @@ export function validateRegisterLostPetPayload(payload: unknown): RegisterLostPe
   const fullName = asTrimmedString(data?.owner?.fullName);
   const phone = asTrimmedString(data?.owner?.phone);
   const email = asNullableTrimmedString(data?.owner?.email);
-
-  const isRegistered = data?.reporter?.isRegistered === true;
-  const emailVerified = data?.reporter?.emailVerified === true;
 
   if (!name || !breed || !description || !fullName || !phone || !lastSeen || !neighborhood) {
     throw new ValidationError(
@@ -124,10 +117,6 @@ export function validateRegisterLostPetPayload(payload: unknown): RegisterLostPe
       fullName,
       phone,
       email,
-    },
-    reporter: {
-      isRegistered,
-      emailVerified,
     },
   };
 }

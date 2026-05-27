@@ -9,7 +9,6 @@ export interface LostPetFilters {
   maxLat?: number;
   minLng?: number;
   maxLng?: number;
-  onlyPublished?: boolean;
 }
 
 export interface LostPetsRepository {

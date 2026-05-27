@@ -5,7 +5,7 @@ import { ImageCapture } from "@/modules/shared/domain/image-capture";
 export interface LostPetOwner {
   id: number;
   fullName: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
 }
 
@@ -24,9 +24,6 @@ export interface LostPet {
   longitude: number;
   lastSeen: string;
   reportDate: string;
-  publicationStatus: "PENDING_VERIFICATION" | "PUBLISHED" | "ARCHIVED";
-  emailVerified: boolean;
-  isRegisteredReporter: boolean;
   createdAt: string;
   owner: LostPetOwner;
 }
@@ -51,10 +48,6 @@ export interface RegisterLostPetInput {
     fullName: string;
     phone: string;
     email: string | null;
-  };
-  reporter: {
-    isRegistered: boolean;
-    emailVerified: boolean;
   };
 }
 

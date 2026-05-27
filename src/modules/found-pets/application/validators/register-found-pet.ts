@@ -29,10 +29,6 @@ interface RequestPayload {
     phone?: unknown;
     email?: unknown;
   };
-  reporter?: {
-    isRegistered?: unknown;
-    emailVerified?: unknown;
-  };
 }
 
 export function validateRegisterFoundPetPayload(payload: unknown): RegisterFoundPetInput {
@@ -63,9 +59,6 @@ export function validateRegisterFoundPetPayload(payload: unknown): RegisterFound
   const fullName = asTrimmedString(data?.finder?.fullName);
   const phone = asTrimmedString(data?.finder?.phone);
   const email = asNullableTrimmedString(data?.finder?.email);
-
-  const isRegistered = data?.reporter?.isRegistered === true;
-  const emailVerified = data?.reporter?.emailVerified === true;
 
   if (!name || !breed || !description || !fullName || !phone || !neighborhood) {
     throw new ValidationError(
@@ -121,10 +114,6 @@ export function validateRegisterFoundPetPayload(payload: unknown): RegisterFound
       fullName,
       phone,
       email,
-    },
-    reporter: {
-      isRegistered,
-      emailVerified,
     },
   };
 }

@@ -6,7 +6,7 @@ export type { PetSpecies };
 export interface FoundPetOwner {
   id: number;
   fullName: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
 }
 
@@ -25,9 +25,6 @@ export interface FoundPet {
   longitude: number;
   foundAt: string;
   reportDate: string;
-  publicationStatus: "PENDING_VERIFICATION" | "PUBLISHED" | "ARCHIVED";
-  emailVerified: boolean;
-  isRegisteredReporter: boolean;
   owner: FoundPetOwner;
 }
 
@@ -50,10 +47,6 @@ export interface RegisterFoundPetInput {
     fullName: string;
     phone: string;
     email: string | null;
-  };
-  reporter: {
-    isRegistered: boolean;
-    emailVerified: boolean;
   };
 }
 
