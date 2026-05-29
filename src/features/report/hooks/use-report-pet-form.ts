@@ -22,7 +22,13 @@ export function useReportPetForm({
   onSuccess,
 }: UseReportPetFormParams) {
   const { user } = useAuth();
-  const [form, setForm] = useState<ReportPetFormState>(defaultReportPetForm);
+
+  const [form, setForm] = useState<ReportPetFormState>(() => ({
+    ...defaultReportPetForm,
+    ownerName: user?.fullName ?? "",
+    ownerPhone: user?.phone ?? "",
+    ownerEmail: user?.email ?? "",
+  }));
 
   const [coordinates, setCoordinates] = useState<[number, number] | null>(
     initialLocation,
@@ -34,6 +40,18 @@ export function useReportPetForm({
   const [resolvingLocation, setResolvingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
+
+  // Sincroniza datos de contacto cuando el usuario inicia sesión con el formulario abierto,
+  // pero solo si los campos siguen vacíos para no pisar ediciones manuales.
+  useEffect(() => {
+    if (!user) return;
+    setForm((current) => ({
+      ...current,
+      ownerName: current.ownerName || user.fullName,
+      ownerPhone: current.ownerPhone || (user.phone ?? ""),
+      ownerEmail: current.ownerEmail || user.email,
+    }));
+  }, [user]);
 
   const [errors, setErrors] = useState<ReportPetErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -163,7 +181,12 @@ export function useReportPetForm({
   };
 
   const reset = () => {
-    setForm(defaultReportPetForm);
+    setForm({
+      ...defaultReportPetForm,
+      ownerName: user?.fullName ?? "",
+      ownerPhone: user?.phone ?? "",
+      ownerEmail: user?.email ?? "",
+    });
     setCoordinates(initialLocation);
     setLocationData(null);
     setLocationError(null);

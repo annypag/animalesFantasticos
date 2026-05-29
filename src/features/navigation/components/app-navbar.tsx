@@ -38,9 +38,9 @@ export function AppNavbar() {
 
           <div className="flex items-center gap-2">
             {/* Nuevo reporte */}
-            <Link
-              href="/nuevoReporte"
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            <button
+              onClick={() => router.push("/nuevoReporte")}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 ${
                 pathname === "/nuevoReporte"
                   ? "bg-primary text-primary-foreground"
                   : "border border-border text-foreground hover:bg-muted"
@@ -48,7 +48,7 @@ export function AppNavbar() {
             >
               <CirclePlus className="h-4 w-4" />
               <span>Nuevo reporte</span>
-            </Link>
+            </button>
 
             {user ? (
               <>
@@ -56,7 +56,7 @@ export function AppNavbar() {
                 <button
                   type="button"
                   onClick={() => router.push("/profile")}
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600  ${
                     pathname === "/profile"
                       ? "bg-primary text-primary-foreground"
                       : "border border-border text-foreground hover:bg-muted"
