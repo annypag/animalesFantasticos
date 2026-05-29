@@ -14,9 +14,9 @@ export async function handlePostImageUpload(
       throw new ValidationError("Debés adjuntar un archivo de imagen.");
     }
 
-    const imageUrl = await saveLocalImage(file, folder);
+    const imageCapture = await saveLocalImage(file, folder);
 
-    return NextResponse.json({ imageUrl }, { status: 201 });
+    return NextResponse.json({ imageUrl: imageCapture.fileUrl, imageCapture }, { status: 201 });
   } catch (error) {
     if (error instanceof ValidationError) {
       return NextResponse.json({ message: error.message }, { status: error.statusCode });

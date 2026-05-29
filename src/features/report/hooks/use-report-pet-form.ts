@@ -89,6 +89,7 @@ export function useReportPetForm({
         setForm((current) => ({
           ...current,
           locationText: location.displayName || fallbackLocationText,
+          neighborhood: location.neighborhood || current.neighborhood,
         }));
 
         setErrors((current) => ({
@@ -178,7 +179,7 @@ export function useReportPetForm({
 
     setErrors(nextErrors);
 
-    if (Object.keys(nextErrors).length > 0 || !coordinates) {
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 

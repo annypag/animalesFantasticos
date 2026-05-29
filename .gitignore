@@ -41,6 +41,10 @@ src/generated/prisma/
 !/public/uploads/chat/.gitkeep
 /public/uploads/reports/*
 !/public/uploads/reports/.gitkeep
+/public/assets/chat/*
+!/public/assets/chat/.gitkeep
+/public/assets/reports/*
+!/public/assets/reports/.gitkeep
 
 # vercel
 .vercel

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { Calendar, MapPin, X, User } from "lucide-react";
+import { Calendar, MapPin, X } from "lucide-react";
 import { formatAbsoluteDateTime } from "@/features/home/lib/pet-utils";
 import { Pet } from "@/features/home/types";
 import { ChatModal } from "@/features/messaging/components/chat-modal";
@@ -88,7 +88,17 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
 
         <div className="p-6">
           <div className="mb-4">
-            <h2 className="text-2xl font-semibold">{pet.name}</h2>
+                        <h2 className="text-2xl font-semibold">{pet.name}</h2>
+            <div className="mt-2 grid gap-3 rounded-xl border border-border p-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Sexo</p>
+                <p className="text-sm font-medium">{pet.sex ?? "Desconocido"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Raza</p>
+                <p className="text-sm font-medium">{pet.breed}</p>
+              </div>
+            </div>
             <p className="text-sm text-muted-foreground">
               {pet.species} • {pet.breed}
             </p>
@@ -174,3 +184,4 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
     
   );
 }
+

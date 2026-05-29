@@ -18,3 +18,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Agent standard
 - Fuente de verdad para el flujo del agente: `.github/agents/next-js-typescript-fullstack.agent.md`.
 - Si hay conflicto entre guias, priorizar ese archivo para mantener consistencia en todo el equipo.
+
+
+## objetivo
+la aplicación de búsqueda de animales perdidos, el objetivo de la aplicación es lograr que las personas puedan hallar a su mascota perdida con ayuda de la comunidad de la aplicación, la cual publica reporte de mascotas hallada en un formulario para poder matchear la coincidencias con las búsquedas activas y de esta manera rencontrar al dueño con su mascota.
+La aplicación debe permitir que una persona pueda publicar sin ser usuario y dejar su publicación con sus datos de contacto compartido con el foro de usuarios, pero si se registra en la aplicación logra acceder a listado de mascotas encontradas que los demás usuarios de la aplicación publicaron y marchaear por IA con reconocimiento de imagen las coincidencias de la mascota.  
+La publicación de pet-lost debe tener datos obligatorios de la mascota como: fotos de la mascota (mientras más ganas precisión) sexo, tipo raza, fecha de extravío/hallazgo con formato dd/mm/yyyym , latitud y longitud y barrio. también tenes disponible un mapa con filtros para ver en tiempo real las mascotas halladas y filtrar por barrio y raza.
+El sign-up de la aplicación por el momento debería ser email y alguna autenticación de correo sencilla.
+Stack tecnológico: Node.JS - Prisma (ORM) - Postgres.
+Api de mapa: leaflet y nominatim.openstreetmap.org/reverse.
