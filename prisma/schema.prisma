@@ -17,7 +17,6 @@ model User {
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   
-  // Relaciones: Un usuario puede tener muchos reportes
   foundPets    FoundPet[]
   lostPets     LostPet[]
 
