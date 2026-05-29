@@ -18,19 +18,19 @@ export function validatePetReport({
   const errors: ReportPetErrors = {};
 
   if (form.nameSituation === "tag" && !form.name.trim()) {
-    errors.name = "Ingresa el nombre que figura en la chapita.";
+    errors.name = "Ingrese el nombre que figura en la chapita.";
   }
 
   if (form.breed.length === 0) {
-    errors.breed = "Selecciona al menos una raza o Desconocido.";
+    errors.breed = "Seleccione al menos una raza o Desconocido.";
   }
 
   if (!form.description.trim()) {
-    errors.description = "La descripcion es obligatoria.";
+    errors.description = "La descripción es obligatoria.";
   }
 
   if (!form.imageUrl.trim() || form.imageCapture.length === 0) {
-    errors.imageUrl = "Subi al menos una foto de la mascota.";
+    errors.imageUrl = "Sube al menos una foto de la mascota.";
   }
 
   if (!form.neighborhood.trim()) {
@@ -44,14 +44,14 @@ export function validatePetReport({
   if (!form.ownerName.trim()) {
     errors.ownerName =
       type === "found"
-        ? "El nombre de quien encontro la mascota es obligatorio."
+        ? "El nombre de quien encontró la mascota es obligatorio."
         : "Tu nombre es obligatorio.";
   }
 
   if (!form.ownerPhone.trim()) {
-    errors.ownerPhone = "El telefono de contacto es obligatorio.";
-  } else if (!/^15-\d{4}-\d{4}$/.test(form.ownerPhone.trim())) {
-    errors.ownerPhone = "Formato invalido. Usa 15-0000-0000.";
+    errors.ownerPhone = "El teléfono de contacto es obligatorio.";
+  } else if (!/^\d{10}$/.test(form.ownerPhone.trim())) {
+    errors.ownerPhone = "Ingrese exactamente 10 dígitos numéricos.";
   }
 
   if (form.ownerEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.ownerEmail.trim())) {
@@ -59,7 +59,7 @@ export function validatePetReport({
   }
 
   if (!coordinates && !form.neighborhood.trim()) {
-    errors.coordinates = "Marca una ubicacion en el mapa o completa el barrio.";
+    errors.coordinates = "Marque una ubicación en el mapa o completa el barrio.";
   }
 
   return errors;

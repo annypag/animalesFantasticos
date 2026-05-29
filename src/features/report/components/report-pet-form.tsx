@@ -156,7 +156,7 @@ export function ReportPetForm({
               />
             ) : (
               <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                Todavia no elegiste una foto.
+                Todavía no elegiste una foto.
               </div>
             )}
           </div>
@@ -192,7 +192,7 @@ export function ReportPetForm({
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-bold">Ubicacion</h2>
+        <h2 className="mb-3 text-lg font-bold">Ubicación</h2>
 
         <div className="rounded-3xl border border-border bg-white p-4">
           <ReportLocationMap
@@ -202,7 +202,7 @@ export function ReportPetForm({
           />
 
           <label className="mt-4 block space-y-1.5 text-sm">
-            <span className="font-medium">Direccion o referencia</span>
+            <span className="font-medium">Dirección o referencia</span>
             <input
               value={form.locationText}
               onChange={(event) =>
@@ -258,7 +258,7 @@ export function ReportPetForm({
             </label>
 
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Tamano</span>
+              <span className="font-medium">Tamaño</span>
               <select
                 value={form.size}
                 onChange={(event) =>
@@ -269,7 +269,7 @@ export function ReportPetForm({
                 }
                 className="h-11 w-full rounded-2xl border border-border bg-white px-3"
               >
-                <option value="Pequeno">Pequeno</option>
+                <option value="Pequeno">Pequeño</option>
                 <option value="Mediano">Mediano</option>
                 <option value="Grande">Grande</option>
               </select>
@@ -353,7 +353,7 @@ export function ReportPetForm({
                   <span>
                     Tiene chapita identificatoria
                     <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Podes cargar el nombre que figure en la chapita.
+                      Podés cargar el nombre que figure en la chapita.
                     </span>
                   </span>
                 </label>
@@ -369,7 +369,7 @@ export function ReportPetForm({
                   <span>
                     No sabemos el nombre
                     <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Se publicara como &quot;{PET_NAME_UNKNOWN}&quot;.
+                      Se publicará como &quot;{PET_NAME_UNKNOWN}&quot;.
                     </span>
                   </span>
                 </label>
@@ -396,7 +396,7 @@ export function ReportPetForm({
             </div>
 
             <label className="space-y-1.5 text-sm sm:col-span-2">
-              <span className="font-medium">{requiredLabel("Descripcion")}</span>
+              <span className="font-medium">{requiredLabel("Descripción")}</span>
               <textarea
                 rows={3}
                 value={form.description}
@@ -422,7 +422,7 @@ export function ReportPetForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm sm:col-span-2">
               <span className="font-medium">
-                {requiredLabel(isLost ? "Nombre del dueno" : "Persona que encontro")}
+                {requiredLabel(isLost ? "Nombre del dueño" : "Persona que encontró")}
               </span>
               <input
                 value={form.ownerName}
@@ -439,13 +439,13 @@ export function ReportPetForm({
             </label>
 
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">{requiredLabel("Telefono")}</span>
+              <span className="font-medium">{requiredLabel("Teléfono")}</span>
               <input
                 value={form.ownerPhone}
                 onChange={(event) =>
                   onFieldChange("ownerPhone", event.target.value)
                 }
-                placeholder="15-0000-0000"
+                placeholder="1512341234"
                 inputMode="numeric"
                 className={`h-11 w-full rounded-2xl border px-3 ${
                   errors.ownerPhone ? "border-red-400" : "border-border"

@@ -59,7 +59,7 @@ model LostPet {
   locationText String   @map("location_text")
   latitude     Float
   longitude    Float
-  lastSeen     String   @map("last_seen") // Usamos String porque en el modal lo capturamos como texto libre ("Hoy a las 15:00 hrs")
+  lastSeen     String   @map("last_seen") 
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([createdAt(sort: Desc)], map: "lost_pets_created_at_idx")
