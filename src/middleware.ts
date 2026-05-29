@@ -3,12 +3,30 @@ import { getSessionToken } from "@/lib/auth/session";
 import { verifyToken } from "@/lib/auth/jwt";
 
 const PROTECTED_POST_ROUTES = ["/api/lost-pets", "/api/found-pets"];
+const PROTECTED_PAGES = ["/profile"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isProtected = request.method === "POST" && PROTECTED_POST_ROUTES.some((r) => pathname.startsWith(r));
 
-  if (!isProtected) {
+  // Guard de páginas: redirige a /login si no hay sesión válida
+  if (PROTECTED_PAGES.some((p) => pathname.startsWith(p))) {
+    const token = getSessionToken(request);
+    const payload = token ? await verifyToken(token) : null;
+
+    if (!payload) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next();
+  }
+
+  // Guard de API: bloquea POST sin sesión
+  const isProtectedApi =
+    request.method === "POST" && PROTECTED_POST_ROUTES.some((r) => pathname.startsWith(r));
+
+  if (!isProtectedApi) {
     return NextResponse.next();
   }
 
@@ -35,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/lost-pets/:path*", "/api/found-pets/:path*"],
+  matcher: ["/profile/:path*", "/api/lost-pets/:path*", "/api/found-pets/:path*"],
 };
