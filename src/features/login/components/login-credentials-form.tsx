@@ -3,12 +3,13 @@
 import { FormEvent } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { motion } from "motion/react";
-import { SocialLoginButtons } from "@/features/login/components/social-login-buttons";
 
 interface LoginCredentialsFormProps {
   email: string;
   password: string;
   showPassword: boolean;
+  error?: string | null;
+  loading?: boolean;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
@@ -19,6 +20,8 @@ export function LoginCredentialsForm({
   email,
   password,
   showPassword,
+  error,
+  loading,
   onSubmit,
   onEmailChange,
   onPasswordChange,
@@ -32,6 +35,12 @@ export function LoginCredentialsForm({
       onSubmit={onSubmit}
       className="flex-1 space-y-6"
     >
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-medium">
           Email
@@ -41,9 +50,10 @@ export function LoginCredentialsForm({
           <input
             id="email"
             type="email"
-            placeholder="your@email.com"
+            placeholder="tu@email.com"
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
+            required
             className="h-14 w-full rounded-2xl border-2 border-border bg-white pl-12 text-base focus:border-primary focus:outline-none"
           />
         </div>
@@ -51,7 +61,7 @@ export function LoginCredentialsForm({
 
       <div className="space-y-2">
         <label htmlFor="password" className="text-sm font-medium">
-          Password
+          Contraseña
         </label>
         <div className="relative">
           <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -61,6 +71,7 @@ export function LoginCredentialsForm({
             placeholder="••••••••"
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
+            required
             className="h-14 w-full rounded-2xl border-2 border-border bg-white pl-12 pr-12 text-base focus:border-primary focus:outline-none"
           />
           <button
@@ -73,26 +84,13 @@ export function LoginCredentialsForm({
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <button type="button" className="p-0 text-sm text-primary">
-          Forgot password?
-        </button>
-      </div>
-
       <button
         type="submit"
-        className="w-full rounded-2xl bg-primary py-6 text-base font-semibold text-white hover:bg-primary/90"
+        disabled={loading}
+        className="w-full rounded-2xl bg-primary py-6 text-base font-semibold text-white hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Sign In
+        {loading ? "Ingresando..." : "Iniciar sesión"}
       </button>
-
-      <div className="relative flex items-center py-4">
-        <div className="flex-1 border-t"></div>
-        <span className="px-4 text-sm text-muted-foreground">or continue with</span>
-        <div className="flex-1 border-t"></div>
-      </div>
-
-      <SocialLoginButtons />
     </motion.form>
   );
 }

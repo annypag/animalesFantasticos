@@ -8,6 +8,7 @@ import {
 import { validatePetReport } from "../lib/report-validation";
 import { createPetReport } from "../lib/report-api";
 import { getReverseGeocodingLocation, ReverseGeocodingLocation } from "../lib/geocoding-api";
+import { useAuth } from "@/contexts/auth-context";
 
 type UseReportPetFormParams = {
   type: ReportType;
@@ -20,6 +21,7 @@ export function useReportPetForm({
   initialLocation = null,
   onSuccess,
 }: UseReportPetFormParams) {
+  const { user } = useAuth();
   const [form, setForm] = useState<ReportPetFormState>(defaultReportPetForm);
 
   const [coordinates, setCoordinates] = useState<[number, number] | null>(
@@ -35,6 +37,7 @@ export function useReportPetForm({
 
   const [errors, setErrors] = useState<ReportPetErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const formatCoordinatesText = (coordinates: [number, number]) => {
@@ -167,10 +170,17 @@ export function useReportPetForm({
     setResolvingLocation(false);
     setErrors({});
     setSubmitError(null);
+    setAuthError(null);
     setSaving(false);
   };
 
   const submit = async () => {
+    if (!user) {
+      setAuthError("Para publicar un reporte necesitás iniciar sesión.");
+      return;
+    }
+    setAuthError(null);
+
     const nextErrors = validatePetReport({
       type,
       form,
@@ -214,6 +224,7 @@ export function useReportPetForm({
     locationError,
     errors,
     submitError,
+    authError,
     saving,
     changeField,
     changeCoordinates,

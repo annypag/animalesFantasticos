@@ -51,8 +51,14 @@ export async function handleGetFoundPets(request: Request) {
 
 export async function handlePostFoundPets(request: Request) {
   try {
+    const userIdHeader = request.headers.get("x-user-id");
+    const userId = userIdHeader ? Number(userIdHeader) : NaN;
+    if (!userId || !Number.isFinite(userId)) {
+      return NextResponse.json({ message: "Debés iniciar sesión para publicar un reporte." }, { status: 401 });
+    }
+
     const body = (await request.json()) as unknown;
-    const input = validateRegisterFoundPetPayload(body);
+    const input = validateRegisterFoundPetPayload(body, userId);
     const pet = await registerFoundPet(repository, input);
 
     return NextResponse.json({ pet }, { status: 201 });

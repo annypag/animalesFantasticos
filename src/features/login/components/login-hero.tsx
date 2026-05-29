@@ -14,9 +14,9 @@ export function LoginHero() {
       <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-[#14B8A6] shadow-xl">
         <PawPrint className="h-11 w-11 text-white" strokeWidth={2.5} />
       </div>
-      <h1 className="mb-2 text-3xl font-bold">Wofie</h1>
+      <h1 className="mb-2 text-3xl font-bold">Woofie</h1>
       <p className="text-center text-muted-foreground">
-        Sign in to help reunite pets with their families
+        Iniciá sesión para ayudar a reunir mascotas con sus familias
       </p>
     </motion.div>
   );

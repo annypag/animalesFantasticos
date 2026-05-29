@@ -80,7 +80,7 @@ export function FiltersBar({
                 <button
                   type="button"
                   onClick={onClearFilters}
-                  className="inline-flex h-9 items-center rounded-full border border-border bg-white px-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="inline-flex h-9 items-center rounded-full border border-border bg-white px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   Limpiar filtros
                 </button>

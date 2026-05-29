@@ -131,46 +131,30 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
   }
 
   async createFoundPet(input: RegisterFoundPetInput): Promise<FoundPet> {
-    const createdPet = await prisma.$transaction(async (tx) => {
-      // Reutiliza el User si el email ya existe; crea uno nuevo si no.
-      // El campo passwordHash queda como placeholder ya que este usuario
-      // es el contacto del reporte, no un usuario de login.
-      const email = input.owner.email ?? `noreply_${Date.now()}@noreply.local`;
-      const user = await tx.user.upsert({
-        where: { email },
-        update: {},
-        create: {
-          fullName: input.owner.fullName,
-          email,
-          phone: input.owner.phone,
-          passwordHash: "__cannot_login__",
-        },
-      });
-
-      return tx.foundPet.create({
-        data: {
-          userId: user.id,
-          name: input.pet.name,
-          sex: toSexEnum(input.pet.sex),
-          species: input.pet.species,
-          breed: input.pet.breed,
-          imageUrl:
-            input.pet.imageUrl ||
-            input.pet.imageCapture[0]?.fileUrl ||
-            "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-          imageUrls: JSON.parse(JSON.stringify(input.pet.imageCapture)),
-          description: input.pet.description,
-          locationText:
-            input.pet.locationText || `${input.pet.latitude.toFixed(4)}, ${input.pet.longitude.toFixed(4)}`,
-          neighborhood: input.pet.neighborhood,
-          latitude: input.pet.latitude,
-          longitude: input.pet.longitude,
-          reportDate: input.pet.reportDate,
-        },
-        include: {
-          user: true,
-        },
-      });
+    const createdPet = await prisma.foundPet.create({
+      data: {
+        userId: BigInt(input.userId),
+        name: input.pet.name,
+        sex: toSexEnum(input.pet.sex),
+        species: input.pet.species,
+        breed: input.pet.breed,
+        imageUrl:
+          input.pet.imageUrl ||
+          input.pet.imageCapture[0]?.fileUrl ||
+          "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+        imageUrls: JSON.parse(JSON.stringify(input.pet.imageCapture)),
+        description: input.pet.description,
+        locationText:
+          input.pet.locationText ||
+          `${input.pet.latitude.toFixed(4)}, ${input.pet.longitude.toFixed(4)}`,
+        neighborhood: input.pet.neighborhood,
+        latitude: input.pet.latitude,
+        longitude: input.pet.longitude,
+        reportDate: input.pet.reportDate,
+      },
+      include: {
+        user: true,
+      },
     });
 
     return mapFoundPetRecord(createdPet);

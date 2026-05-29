@@ -1,7 +1,5 @@
-import { handleAuthSignupPost } from "@/modules/auth-lite";
-
-export const dynamic = "force-dynamic";
+import { handlePostRegister } from "@/modules/auth/presentation/http/auth-handler";
 
 export async function POST(request: Request) {
-  return handleAuthSignupPost(request);
+  return handlePostRegister(request);
 }
