@@ -32,7 +32,7 @@ interface RequestPayload {
   };
 }
 
-export function validateRegisterLostPetPayload(payload: unknown): RegisterLostPetInput {
+export function validateRegisterLostPetPayload(payload: unknown, userId: number): RegisterLostPetInput {
   const data = payload as RequestPayload;
 
   const name = asTrimmedString(data?.pet?.name);
@@ -93,6 +93,7 @@ export function validateRegisterLostPetPayload(payload: unknown): RegisterLostPe
   }
 
   return {
+    userId,
     pet: {
       name,
       sex,

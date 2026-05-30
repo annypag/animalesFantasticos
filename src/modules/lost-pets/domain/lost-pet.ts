@@ -29,6 +29,7 @@ export interface LostPet {
 }
 
 export interface RegisterLostPetInput {
+  userId: number;
   pet: {
     name: string;
     sex: PetSex;

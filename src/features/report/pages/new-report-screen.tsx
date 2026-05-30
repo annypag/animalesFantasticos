@@ -113,6 +113,7 @@ export function NewReportScreen() {
           coordinates={reportForm.coordinates}
           errors={reportForm.errors}
           submitError={reportForm.submitError}
+          authError={reportForm.authError}
           saving={reportForm.saving}
           onFieldChange={reportForm.changeField}
           onCoordinatesChange={reportForm.changeCoordinates}

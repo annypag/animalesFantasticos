@@ -51,8 +51,14 @@ export async function handleGetLostPets(request: Request) {
 
 export async function handlePostLostPets(request: Request) {
   try {
+    const userIdHeader = request.headers.get("x-user-id");
+    const userId = userIdHeader ? Number(userIdHeader) : NaN;
+    if (!userId || !Number.isFinite(userId)) {
+      return NextResponse.json({ message: "Debés iniciar sesión para publicar un reporte." }, { status: 401 });
+    }
+
     const body = (await request.json()) as unknown;
-    const input = validateRegisterLostPetPayload(body);
+    const input = validateRegisterLostPetPayload(body, userId);
     const pet = await registerLostPet(repository, input);
 
     return NextResponse.json({ pet }, { status: 201 });

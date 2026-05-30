@@ -8,6 +8,7 @@ import {
 import { validatePetReport } from "../lib/report-validation";
 import { createPetReport } from "../lib/report-api";
 import { getReverseGeocodingLocation, ReverseGeocodingLocation } from "../lib/geocoding-api";
+import { useAuth } from "@/contexts/auth-context";
 
 type UseReportPetFormParams = {
   type: ReportType;
@@ -20,7 +21,14 @@ export function useReportPetForm({
   initialLocation = null,
   onSuccess,
 }: UseReportPetFormParams) {
-  const [form, setForm] = useState<ReportPetFormState>(defaultReportPetForm);
+  const { user } = useAuth();
+
+  const [form, setForm] = useState<ReportPetFormState>(() => ({
+    ...defaultReportPetForm,
+    ownerName: user?.fullName ?? "",
+    ownerPhone: user?.phone ?? "",
+    ownerEmail: user?.email ?? "",
+  }));
 
   const [coordinates, setCoordinates] = useState<[number, number] | null>(
     initialLocation,
@@ -33,8 +41,21 @@ export function useReportPetForm({
   const [locationError, setLocationError] = useState<string | null>(null);
 
 
+  // Sincroniza datos de contacto cuando el usuario inicia sesión con el formulario abierto,
+  // pero solo si los campos siguen vacíos para no pisar ediciones manuales.
+  useEffect(() => {
+    if (!user) return;
+    setForm((current) => ({
+      ...current,
+      ownerName: current.ownerName || user.fullName,
+      ownerPhone: current.ownerPhone || (user.phone ?? ""),
+      ownerEmail: current.ownerEmail || user.email,
+    }));
+  }, [user]);
+
   const [errors, setErrors] = useState<ReportPetErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const formatCoordinatesText = (coordinates: [number, number]) => {
@@ -160,17 +181,29 @@ export function useReportPetForm({
   };
 
   const reset = () => {
-    setForm(defaultReportPetForm);
+    setForm({
+      ...defaultReportPetForm,
+      ownerName: user?.fullName ?? "",
+      ownerPhone: user?.phone ?? "",
+      ownerEmail: user?.email ?? "",
+    });
     setCoordinates(initialLocation);
     setLocationData(null);
     setLocationError(null);
     setResolvingLocation(false);
     setErrors({});
     setSubmitError(null);
+    setAuthError(null);
     setSaving(false);
   };
 
   const submit = async () => {
+    if (!user) {
+      setAuthError("Para publicar un reporte necesitás iniciar sesión.");
+      return;
+    }
+    setAuthError(null);
+
     const nextErrors = validatePetReport({
       type,
       form,
@@ -214,6 +247,7 @@ export function useReportPetForm({
     locationError,
     errors,
     submitError,
+    authError,
     saving,
     changeField,
     changeCoordinates,

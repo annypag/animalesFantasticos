@@ -44,7 +44,7 @@ export function PetsResultsScreen() {
         <button
           type="button"
           onClick={handleBackToMap}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium transition hover:bg-secondary"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al mapa
