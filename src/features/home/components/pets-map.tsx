@@ -151,6 +151,9 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
                       </div>
                       <div className="text-xs leading-none text-muted-foreground mb-1">
                         {pet.species} • {pet.breed}
+                        {pet.sex && pet.sex !== "Desconocido" && (
+                          <span> • {pet.sex}</span>
+                        )}
                       </div>
 
                       {pet.createdAt && (
