@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { FiltersBar } from "@/features/home/components/filters-bar";
 import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
 import { PetsMap } from "@/features/home/components/pets-map";
@@ -14,6 +15,7 @@ import { usePetsSearch } from "../hooks/use-pets-search";
 
 export function HomeScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportType, setReportType] = useState<ReportType>("found");
@@ -22,6 +24,9 @@ export function HomeScreen() {
   );
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [openChatOnMount, setOpenChatOnMount] = useState(false);
+  const [chatConversationId, setChatConversationId] = useState<number | null>(null);
+  const [chatPeerName, setChatPeerName] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
   const {
@@ -35,6 +40,35 @@ export function HomeScreen() {
     addFoundPetFromPayload,
     refreshPets,
   } = usePetsSearch();
+
+  useEffect(() => {
+    const openPetId = searchParams.get("openPet");
+    const openChatParam = searchParams.get("openChat");
+    const peerNameParam = searchParams.get("peerName");
+
+    if (!openPetId || loadingDbPets) {
+      return;
+    }
+
+    const pet = filteredPets.find((item) => item.id === openPetId);
+    if (!pet) {
+      return;
+    }
+
+    const parsedConversationId = openChatParam ? Number(openChatParam) : null;
+
+    setSelectedPet(pet);
+    setModalOpen(true);
+    setOpenChatOnMount(Boolean(parsedConversationId && Number.isInteger(parsedConversationId)));
+    setChatConversationId(
+      parsedConversationId && Number.isInteger(parsedConversationId)
+        ? parsedConversationId
+        : null,
+    );
+    setChatPeerName(peerNameParam ? decodeURIComponent(peerNameParam) : null);
+    router.replace("/", { scroll: false });
+  }, [filteredPets, loadingDbPets, router, searchParams]);
+
   useEffect(() => {
     import("leaflet").then((L) => {
       L.Icon.Default.mergeOptions({
@@ -141,7 +175,16 @@ export function HomeScreen() {
       <PetDetailsModal
         pet={selectedPet}
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setOpenChatOnMount(false);
+          setChatConversationId(null);
+          setChatPeerName(null);
+        }}
+        openChatOnMount={openChatOnMount}
+        chatConversationId={chatConversationId}
+        chatPeerName={chatPeerName}
+        onResolved={refreshPets}
       />
     </main>
   );

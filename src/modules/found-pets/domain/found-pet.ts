@@ -25,6 +25,7 @@ export interface FoundPet {
   longitude: number;
   foundAt: string;
   reportDate: string;
+  resolvedAt: string | null;
   owner: FoundPetOwner;
 }
 

@@ -21,6 +21,7 @@ export async function getOrCreateConversation(params: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
+    cache: "no-store",
   });
 
   if (!response.ok) {
@@ -31,21 +32,32 @@ export async function getOrCreateConversation(params: {
   return payload.conversation;
 }
 
-export async function fetchMessages(
-  conversationId: number,
-): Promise<ApiChatMessage[]> {
-  const response = await fetch(`/api/conversations/${conversationId}/messages`);
+export async function fetchMessages(conversationId: number): Promise<{
+  messages: ApiChatMessage[];
+  conversation: ApiConversation;
+}> {
+  const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     throw new Error(await parseError(response));
   }
 
-  const payload = (await response.json()) as { messages: ApiChatMessage[] };
-  return payload.messages;
+  const payload = (await response.json()) as {
+    messages: ApiChatMessage[];
+    conversation: ApiConversation;
+  };
+
+  return {
+    messages: payload.messages,
+    conversation: payload.conversation,
+  };
 }
 
 export async function sendChatMessage(params: {
   conversationId: number;
+  senderName: string;
   body: string | null;
   imageUrl: string | null;
 }): Promise<ApiChatMessage> {
@@ -55,9 +67,11 @@ export async function sendChatMessage(params: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        senderName: params.senderName,
         body: params.body,
         imageUrl: params.imageUrl,
       }),
+      cache: "no-store",
     },
   );
 
@@ -76,6 +90,7 @@ export async function uploadChatImage(file: File): Promise<string> {
   const response = await fetch("/api/messaging/uploads", {
     method: "POST",
     body: formData,
+    cache: "no-store",
   });
 
   if (!response.ok) {

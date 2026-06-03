@@ -10,43 +10,83 @@ import {
 import type { ApiChatMessage, ApiConversation } from "@/features/messaging/types";
 import type { PetRef } from "@/features/messaging/lib/parse-pet-ref";
 
+const POLL_INTERVAL_MS = 5000;
+
 type UseChatParams = {
   open: boolean;
   petRef: PetRef | null;
+  senderUserId: number | null;
+  senderName: string | null;
+  conversationId?: number | null;
 };
 
-export function useChat({ open, petRef }: UseChatParams) {
+export function useChat({
+  open,
+  petRef,
+  senderUserId,
+  senderName,
+  conversationId: initialConversationId = null,
+}: UseChatParams) {
   const [conversation, setConversation] = useState<ApiConversation | null>(null);
   const [messages, setMessages] = useState<ApiChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [sendingText, setSendingText] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const reloadMessages = useCallback(async (conversationId: number) => {
-    const nextMessages = await fetchMessages(conversationId);
-    setMessages(nextMessages);
+  const reloadMessages = useCallback(async (activeConversationId: number) => {
+    const data = await fetchMessages(activeConversationId);
+    setMessages(data.messages);
+    if (data.conversation) {
+      setConversation(data.conversation);
+    }
   }, []);
 
   useEffect(() => {
-    if (!open || !petRef) {
+    if (!open) {
+      setConversation(null);
+      setMessages([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !senderUserId || !senderName) {
       return;
     }
 
-    const activePetRef = petRef;
     let cancelled = false;
 
     async function bootstrap() {
       setLoading(true);
       setError(null);
+      setMessages([]);
 
       try {
-        const nextConversation = await getOrCreateConversation(activePetRef);
-        if (cancelled) {
-          return;
+        let nextConversation: ApiConversation;
+
+        if (initialConversationId) {
+          const data = await fetchMessages(initialConversationId);
+          if (cancelled) {
+            return;
+          }
+          nextConversation = data.conversation;
+          setMessages(data.messages);
+        } else if (petRef) {
+          nextConversation = await getOrCreateConversation(petRef);
+          if (cancelled) {
+            return;
+          }
+          await reloadMessages(nextConversation.id);
+        } else {
+          throw new Error("No se pudo abrir el chat.");
         }
 
-        setConversation(nextConversation);
-        await reloadMessages(nextConversation.id);
+        if (!cancelled) {
+          setConversation(nextConversation);
+        }
       } catch (bootstrapError) {
         if (!cancelled) {
           setError(
@@ -67,24 +107,38 @@ export function useChat({ open, petRef }: UseChatParams) {
     return () => {
       cancelled = true;
     };
-  }, [open, petRef, reloadMessages]);
+  }, [open, petRef, senderUserId, senderName, initialConversationId, reloadMessages]);
+
+  useEffect(() => {
+    if (!open || !conversation) {
+      return;
+    }
+
+    const activeConversationId = conversation.id;
+    const intervalId = window.setInterval(() => {
+      void reloadMessages(activeConversationId).catch(() => undefined);
+    }, POLL_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [conversation, open, reloadMessages]);
 
   const sendText = useCallback(
     async (body: string) => {
-      if (!conversation) {
+      if (!conversation || !senderName) {
         return;
       }
 
-      setSending(true);
+      setSendingText(true);
       setError(null);
 
       try {
-        await sendChatMessage({
+        const message = await sendChatMessage({
           conversationId: conversation.id,
+          senderName,
           body: body.trim(),
           imageUrl: null,
         });
-        await reloadMessages(conversation.id);
+        setMessages((current) => [...current, message]);
       } catch (sendError) {
         setError(
           sendError instanceof Error
@@ -92,29 +146,30 @@ export function useChat({ open, petRef }: UseChatParams) {
             : "No se pudo enviar el mensaje.",
         );
       } finally {
-        setSending(false);
+        setSendingText(false);
       }
     },
-    [conversation, reloadMessages],
+    [conversation, senderName],
   );
 
   const sendImage = useCallback(
     async (file: File) => {
-      if (!conversation) {
+      if (!conversation || !senderName) {
         return;
       }
 
-      setSending(true);
+      setUploadingImage(true);
       setError(null);
 
       try {
         const imageUrl = await uploadChatImage(file);
-        await sendChatMessage({
+        const message = await sendChatMessage({
           conversationId: conversation.id,
+          senderName,
           body: null,
           imageUrl,
         });
-        await reloadMessages(conversation.id);
+        setMessages((current) => [...current, message]);
       } catch (uploadError) {
         setError(
           uploadError instanceof Error
@@ -122,16 +177,18 @@ export function useChat({ open, petRef }: UseChatParams) {
             : "No se pudo enviar la imagen.",
         );
       } finally {
-        setSending(false);
+        setUploadingImage(false);
       }
     },
-    [conversation, reloadMessages],
+    [conversation, senderName],
   );
 
   return {
     messages,
     loading,
-    sending,
+    sending: sendingText || uploadingImage,
+    sendingText,
+    uploadingImage,
     error,
     sendText,
     sendImage,

@@ -6,6 +6,7 @@ import { AuthError } from "@/modules/auth/domain/auth-error";
 import { signToken } from "@/lib/auth/jwt";
 import { setSessionCookie, clearSessionCookie, getSessionToken } from "@/lib/auth/session";
 import { verifyToken } from "@/lib/auth/jwt";
+import { prisma } from "@/lib/prisma";
 
 const repository = new PrismaAuthRepository();
 
@@ -90,15 +91,53 @@ export async function handleGetMe(request: Request) {
 
   const payload = await verifyToken(token);
   if (!payload) {
-    return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
+    const response = NextResponse.json(
+      { message: "Sesión inválida o expirada." },
+      { status: 401 },
+    );
+    clearSessionCookie(response);
+    return response;
+  }
+
+  const userId = Number(payload.sub);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    const response = NextResponse.json(
+      { message: "Sesión inválida o expirada." },
+      { status: 401 },
+    );
+    clearSessionCookie(response);
+    return response;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: BigInt(userId) },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      phone: true,
+    },
+  });
+
+  if (!user) {
+    const response = NextResponse.json(
+      {
+        message:
+          "Tu cuenta ya no existe en la base de datos (por ejemplo, después de un reset). Volvé a registrarte o iniciá sesión.",
+      },
+      { status: 401 },
+    );
+    clearSessionCookie(response);
+    return response;
   }
 
   return NextResponse.json(
     {
       user: {
-        id: Number(payload.sub),
-        email: payload.email,
-        fullName: payload.fullName,
+        id: Number(user.id),
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
       },
     },
     { status: 200 },
