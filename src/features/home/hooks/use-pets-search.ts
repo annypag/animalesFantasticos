@@ -12,6 +12,9 @@ export const defaultFilters: FiltersState = {
   species: "all",
   size: "all",
   date: "all",
+  neighborhood: "all",
+  sex: "all",
+  breed: "all",
 };
 
 const FILTER_KEYS: Array<keyof FiltersState> = [
@@ -19,7 +22,11 @@ const FILTER_KEYS: Array<keyof FiltersState> = [
   "species",
   "size",
   "date",
+  "neighborhood",
+  "sex",
+  "breed",
 ];
+
 function isValidStatus(value: string | null): FiltersState["status"] {
   if (value === "lost" || value === "found" || value === "all") {
     return value;
@@ -58,6 +65,10 @@ function isValidDate(value: string | null): FiltersState["date"] {
 
   return defaultFilters.date;
 }
+function isValidString(value: string | null, fallback: string): string {
+  return value && value.trim() !== "" ? value : fallback;
+}
+
 function getFiltersFromSearchParams(
   searchParams: URLSearchParams,
 ): FiltersState {
@@ -66,6 +77,9 @@ function getFiltersFromSearchParams(
     species: isValidSpecies(searchParams.get("species")),
     size: isValidSize(searchParams.get("size")),
     date: isValidDate(searchParams.get("date")),
+    neighborhood: isValidString(searchParams.get("neighborhood"), defaultFilters.neighborhood),
+    sex: isValidString(searchParams.get("sex"), defaultFilters.sex),
+    breed: isValidString(searchParams.get("breed"), defaultFilters.breed),
   };
 }
 
@@ -227,7 +241,8 @@ export function usePetsSearch() {
   const filtersQueryString = useMemo(() => {
     return buildFiltersQueryString(filters);
   }, [filters]);
-   const syncFiltersInUrl = useCallback(
+
+  const syncFiltersInUrl = useCallback(
     (nextFilters: FiltersState) => {
       const currentParams = new URLSearchParams(searchParams.toString());
 
@@ -250,7 +265,7 @@ export function usePetsSearch() {
     },
     [pathname, router, searchParams],
   );
-   
+
   const pets = useMemo(() => {
     return [...dbPets, ...mockPets];
   }, [dbPets]);
@@ -268,9 +283,47 @@ export function usePetsSearch() {
 
       const matchesDate = matchesDateFilter(pet.createdAt, filters.date);
 
-      return matchesStatus && matchesSpecies && matchesSize && matchesDate;
+      const matchesNeighborhood =
+        filters.neighborhood === "all" ||
+        pet.neighborhood === filters.neighborhood;
+
+      const matchesSex =
+        filters.sex === "all" || pet.sex === filters.sex;
+
+      const matchesBreed =
+        filters.breed === "all" || pet.breed === filters.breed;
+
+      return (
+        matchesStatus &&
+        matchesSpecies &&
+        matchesSize &&
+        matchesDate &&
+        matchesNeighborhood &&
+        matchesSex &&
+        matchesBreed
+      );
     });
-  }, [pets, filters.status, filters.species, filters.size, filters.date]);
+  }, [pets, filters]);
+
+  const uniqueNeighborhoods = useMemo(() => {
+    const seen = new Set<string>();
+    for (const pet of pets) {
+      if (pet.neighborhood && pet.neighborhood.trim() !== "") {
+        seen.add(pet.neighborhood);
+      }
+    }
+    return Array.from(seen).sort();
+  }, [pets]);
+
+  const uniqueBreeds = useMemo(() => {
+    const seen = new Set<string>();
+    for (const pet of pets) {
+      if (pet.breed && pet.breed.trim() !== "") {
+        seen.add(pet.breed);
+      }
+    }
+    return Array.from(seen).sort();
+  }, [pets]);
 
   const hasActiveFilters = FILTER_KEYS.some(
     (key) => filters[key] !== defaultFilters[key],
@@ -319,6 +372,8 @@ export function usePetsSearch() {
     filtersQueryString,
     loadingDbPets,
     hasActiveFilters,
+    uniqueNeighborhoods,
+    uniqueBreeds,
     setFilters,
     handleFilterChange,
     clearFilters,
