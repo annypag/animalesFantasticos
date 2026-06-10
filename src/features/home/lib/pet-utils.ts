@@ -18,6 +18,7 @@ export function mapApiPetToUiPet(apiPet: ApiFoundPet): Pet {
     createdAt: apiPet.foundAt,
 
     location: apiPet.locationText,
+    neighborhood: apiPet.neighborhood,
     coordinates: [apiPet.latitude, apiPet.longitude],
     description: apiPet.description,
     ownerId: apiPet.owner.id,

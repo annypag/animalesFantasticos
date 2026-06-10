@@ -1,12 +1,16 @@
 import { Suspense } from "react";
 import "leaflet/dist/leaflet.css";
-import { HomeScreen } from "@/features/home/pages/home-screen";
+import { LandingScreen } from "@/features/landing/pages/landing-screen";
 
-// Route entrypoint for "/". UI and state live in features/home.
+export const metadata = {
+  title: "Animales Fantásticos - Inicio",
+  description: "La red comunitaria para reportar mascotas perdidas y encontradas.",
+};
+
 export default function HomePage() {
   return (
     <Suspense fallback={null}>
-      <HomeScreen />
+      <LandingScreen />
     </Suspense>
   );
 }

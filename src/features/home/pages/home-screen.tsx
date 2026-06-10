@@ -27,7 +27,6 @@ export function HomeScreen() {
   const [openChatOnMount, setOpenChatOnMount] = useState(false);
   const [chatConversationId, setChatConversationId] = useState<number | null>(null);
   const [chatPeerName, setChatPeerName] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
   const {
     filteredPets,
@@ -35,6 +34,8 @@ export function HomeScreen() {
     filtersQueryString,
     loadingDbPets,
     hasActiveFilters,
+    uniqueNeighborhoods,
+    uniqueBreeds,
     handleFilterChange,
     clearFilters,
     addFoundPetFromPayload,
@@ -133,11 +134,11 @@ export function HomeScreen() {
   return (
     <main className="flex min-h-0 flex-1 flex-col bg-background">
       <FiltersBar
-        showFilters={showFilters}
         filters={filters}
         petCount={filteredPets.length}
         hasActiveFilters={hasActiveFilters}
-        onToggle={() => setShowFilters((current) => !current)}
+        uniqueNeighborhoods={uniqueNeighborhoods}
+        uniqueBreeds={uniqueBreeds}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
       />

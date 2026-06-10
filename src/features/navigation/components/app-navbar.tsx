@@ -37,15 +37,38 @@ export function AppNavbar() {
             </div>
           </Link>
 
+
           <div className="flex items-center gap-2">
+
+            {/* BOTONES DE NAVEGACIÓN DESKTOP */}
+            <div className="flex items-center gap-1 border-l border-border pl-6">
+              <button
+                onClick={() => router.push("/")}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 ${pathname === "/"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border text-foreground hover:bg-muted"
+                  }`}
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => router.push("/mapa")}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 ${pathname === "/mapa"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border text-foreground hover:bg-muted"
+                  }`}
+              >
+                Mapa
+              </button>
+            </div>
+
             {/* Nuevo reporte */}
             <button
               onClick={() => router.push("/nuevoReporte")}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 ${
-                pathname === "/nuevoReporte"
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 ${pathname === "/nuevoReporte"
                   ? "bg-primary text-primary-foreground"
                   : "border border-border text-foreground hover:bg-muted"
-              }`}
+                }`}
             >
               <CirclePlus className="h-4 w-4" />
               <span>Nuevo reporte</span>
@@ -59,11 +82,10 @@ export function AppNavbar() {
                 <button
                   type="button"
                   onClick={() => router.push("/profile")}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600  ${
-                    pathname === "/profile"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600  ${pathname === "/profile"
                       ? "bg-primary text-primary-foreground"
                       : "border border-border text-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   <div className="h-6 w-6 overflow-hidden rounded-full border border-border">
                     <img
@@ -90,22 +112,20 @@ export function AppNavbar() {
                 {/* No autenticado */}
                 <Link
                   href="/registro"
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    pathname === "/registro"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${pathname === "/registro"
                       ? "bg-primary text-primary-foreground"
                       : "border border-border text-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   <User className="h-4 w-4" />
                   <span>Registrate</span>
                 </Link>
                 <Link
                   href="/login"
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    pathname === "/login"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${pathname === "/login"
                       ? "bg-primary text-primary-foreground"
                       : "bg-primary text-primary-foreground hover:bg-primary/90"
-                  }`}
+                    }`}
                 >
                   <span>Iniciar sesión</span>
                 </Link>
@@ -127,9 +147,8 @@ export function AppNavbar() {
           {/* Inicio */}
           <Link
             href="/"
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${
-              pathname === "/" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-            }`}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${pathname === "/" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+              }`}
           >
             <PawPrint className="h-5 w-5" />
             <span>Inicio</span>
@@ -138,11 +157,10 @@ export function AppNavbar() {
           {/* Nuevo reporte */}
           <Link
             href="/nuevoReporte"
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${
-              pathname === "/nuevoReporte"
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${pathname === "/nuevoReporte"
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
-            }`}
+              }`}
           >
             <CirclePlus className="h-5 w-5" />
             <span>Reportar</span>
@@ -153,11 +171,10 @@ export function AppNavbar() {
               {/* Mi cuenta → nombre de usuario */}
               <Link
                 href="/profile"
-                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${
-                  pathname === "/profile"
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${pathname === "/profile"
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 <div className="h-6 w-6 overflow-hidden rounded-full border border-border">
                   <img
@@ -184,11 +201,10 @@ export function AppNavbar() {
               {/* Registrate */}
               <Link
                 href="/registro"
-                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${
-                  pathname === "/registro"
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${pathname === "/registro"
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 <User className="h-5 w-5" />
                 <span>Registrate</span>
@@ -197,11 +213,10 @@ export function AppNavbar() {
               {/* Iniciar sesión */}
               <Link
                 href="/login"
-                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${
-                  pathname === "/login"
+                className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium transition-colors ${pathname === "/login"
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted"
-                }`}
+                  }`}
               >
                 <LogOut className="h-5 w-5 rotate-180" />
                 <span>Ingresar</span>

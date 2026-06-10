@@ -8,6 +8,7 @@ import { LostPet, RegisterLostPetInput } from "@/modules/lost-pets/domain/lost-p
 function mapLostPetRecord(pet: {
   id: bigint;
   name: string;
+  sex: "MALE" | "FEMALE" | "UNKNOWN";
   species: string;
   breed: string;
   imageUrl: string;
@@ -28,8 +29,7 @@ function mapLostPetRecord(pet: {
   return {
     id: Number(pet.id),
     name: pet.name,
-    // sex y neighborhood no existen en el schema de LostPet — se usan defaults
-    sex: "Desconocido",
+    sex: toSexDomain(pet.sex),
     species: pet.species as LostPet["species"],
     breed: pet.breed,
     imageUrl: pet.imageUrl,
@@ -53,15 +53,15 @@ function mapLostPetRecord(pet: {
 }
 
 function toSexEnum(sex: RegisterLostPetInput["pet"]["sex"]): "MALE" | "FEMALE" | "UNKNOWN" {
-  if (sex === "Macho") {
-    return "MALE";
-  }
-
-  if (sex === "Hembra") {
-    return "FEMALE";
-  }
-
+  if (sex === "Macho") return "MALE";
+  if (sex === "Hembra") return "FEMALE";
   return "UNKNOWN";
+}
+
+function toSexDomain(sex: "MALE" | "FEMALE" | "UNKNOWN"): LostPet["sex"] {
+  if (sex === "MALE") return "Macho";
+  if (sex === "FEMALE") return "Hembra";
+  return "Desconocido";
 }
 
 export class PrismaLostPetsRepository implements LostPetsRepository {
@@ -122,12 +122,11 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
   }
 
   async createLostPet(input: RegisterLostPetInput): Promise<LostPet> {
-    void toSexEnum;
-
     const createdPet = await prisma.lostPet.create({
       data: {
         userId: BigInt(input.userId),
         name: input.pet.name,
+        sex: toSexEnum(input.pet.sex),
         species: input.pet.species,
         breed: input.pet.breed,
         imageUrl:

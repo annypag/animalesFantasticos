@@ -14,6 +14,7 @@ export const mockPets: Pet[] = [
     lastSeen: "hace 2 horas",
     createdAt: "2026-05-06T10:00:00.000Z",
     location: "Palermo, Buenos Aires",
+    neighborhood: "Palermo",
     coordinates: [-34.5875, -58.42],
     description:
       "Golden Retriever macho de 3 anos, muy amigable. Lleva collar azul con placa de identificacion. Responde al nombre de Max. Se perdio cerca del parque.",
@@ -31,6 +32,7 @@ export const mockPets: Pet[] = [
     lastSeen: "ayer",
     createdAt: "2026-05-05T11:00:00.000Z",
     location: "Recoleta, Buenos Aires",
+    neighborhood: "Recoleta",
     coordinates: [-34.5885, -58.395],
     description:
       "Gata negra de ojos verdes, muy timida. No tiene collar. Tiene una pequena mancha blanca en el pecho. Es asustadiza con extranos.",
@@ -48,6 +50,7 @@ export const mockPets: Pet[] = [
     lastSeen: "hace 1 dia",
     createdAt: "2026-05-01T12:00:00.000Z",
     location: "Belgrano, Buenos Aires",
+    neighborhood: "Belgrano",
     coordinates: [-34.5633, -58.4583],
     description:
       "Beagle tricolor muy jugueton. Lleva collar rojo con chapita de identificacion. Le encanta correr y perseguir ardillas. Es muy sociable.",
@@ -65,6 +68,7 @@ export const mockPets: Pet[] = [
     lastSeen: "hace 3 dias",
     createdAt: "2026-04-20T13:00:00.000Z",
     location: "Villa Crespo, Buenos Aires",
+    neighborhood: "Villa Crespo",
     coordinates: [-34.5992, -58.4383],
     description:
       "Gata atigrada de tamano mediano, muy carinosa. Tiene collar rosa con cascabel. Esta esterilizada y tiene microchip.",
@@ -82,6 +86,7 @@ export const mockPets: Pet[] = [
     lastSeen: "hace 5 dias",
     createdAt: "2026-05-06T14:00:00.000Z",
     location: "Caballito, Buenos Aires",
+    neighborhood: "Caballito",
     coordinates: [-34.6158, -58.4392],
     description:
       "Labrador joven color chocolate. Muy energico y amigable. Necesita medicacion diaria. Por favor contactar urgente.",
@@ -99,6 +104,7 @@ export const mockPets: Pet[] = [
     lastSeen: "hace 12 horas",
     createdAt: "2026-05-03T15:00:00.000Z",
     location: "Nunez, Buenos Aires",
+    neighborhood: "Nunez",
     coordinates: [-34.5442, -58.4578],
     description:
       "Gato persa blanco de pelo largo. Muy tranquilo y casero. No esta acostumbrado a estar en la calle. Ojos azules.",

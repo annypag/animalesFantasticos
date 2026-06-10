@@ -6,6 +6,7 @@ export interface Pet {
   sex?: string;
   breed: string;
   size?: string;
+  neighborhood?: string;
   image: string;
   distance: string;
   lastSeen: string;
@@ -28,6 +29,7 @@ export interface ApiFoundPet {
   imageUrl: string;
   description: string;
   locationText: string;
+  neighborhood: string;
   latitude: number;
   longitude: number;
   foundAt: string;
@@ -66,5 +68,8 @@ export interface FiltersState {
   species: string;
   size: string;
   date: string;
+  neighborhood: string;
+  sex: string;
+  breed: string;
 }
 
