@@ -90,6 +90,17 @@ export function PetDetailsModal({
       ? "Marcar como resuelto (ya lo encontré)"
       : "Marcar como resuelto (ya lo devolví)";
 
+  const isLost = pet.status === "lost";
+  // CSS para diferenciar encontrado/perdido
+  const badgeClasses = isLost
+    ? "bg-[var(--alert-orange)]/10 text-[var(--alert-orange)] border-[var(--alert-orange)]/20"
+    : "bg-primary/10 text-primary border-primary/20";
+
+  const buttonColorClass = isLost
+    ? "bg-[var(--alert-orange)] hover:bg-[var(--alert-orange)]/90"
+    : "bg-primary hover:bg-primary/90";
+
+  // Función para cerrar todo de forma limpia
   const handleClose = () => {
     setChatModalOpen(false);
     setResolveError(null);
@@ -141,8 +152,15 @@ export function PetDetailsModal({
         </div>
 
         <div className="p-6">
-          <div className="mb-4">
-                        <h2 className="text-2xl font-semibold">{pet.name}</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-semibold">{pet.name}</h2>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide border ${badgeClasses}`}>
+                {isLost ? "Perdido" : "Encontrado"}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1.5">
+              {pet.species} • {pet.breed}
+            </p>
             <div className="mt-2 grid gap-3 rounded-xl border border-border p-3 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-muted-foreground">Sexo</p>
@@ -153,9 +171,6 @@ export function PetDetailsModal({
                 <p className="text-sm font-medium">{pet.breed}</p>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {pet.species} • {pet.breed}
-            </p>
             {isResolved && (
               <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                 Caso resuelto
@@ -195,7 +210,9 @@ export function PetDetailsModal({
           </div>
 
           <div className="mb-6">
-            <h4 className="mb-3 text-sm font-semibold">Zona de desaparicion</h4>
+            <h4 className="mb-3 text-sm font-semibold">
+              {isLost ? "Zona de desaparicion" : "Zona donde se encontró"}
+            </h4>
             <div className="relative h-64 w-full overflow-hidden rounded-xl border">
               <MapContainer center={pet.coordinates} zoom={14} className="z-0 h-full w-full" scrollWheelZoom={false}>
                 <MapResizeFix />
@@ -208,8 +225,8 @@ export function PetDetailsModal({
                   center={pet.coordinates}
                   radius={500}
                   pathOptions={{
-                    color: "#10b981",
-                    fillColor: "#10b981",
+                    color: isLost ? "#f97316" : "#1e40af",
+                    fillColor: isLost ? "#f97316" : "#1e40af",
                     fillOpacity: 0.1,
                   }}
                 />
@@ -222,7 +239,7 @@ export function PetDetailsModal({
                 <button
                   type="button"
                   onClick={() => setChatModalOpen(true)}
-                  className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-sm font-semibold text-white hover:bg-primary/90"
+                  className={`flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold text-white transition-colors ${buttonColorClass} cursor-pointer`}
                 >
                   Chatear
                 </button>
@@ -239,7 +256,7 @@ export function PetDetailsModal({
                   type="button"
                   onClick={() => void handleResolve()}
                   disabled={resolving}
-                  className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60 cursor-pointer"
                 >
                   {resolving ? "Cerrando publicación..." : resolveLabel}
                 </button>
@@ -250,7 +267,7 @@ export function PetDetailsModal({
             )}
 
             {isResolved && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
                 Esta publicación está cerrada. El chat ya no está disponible.
               </p>
             )}
@@ -265,12 +282,8 @@ export function PetDetailsModal({
         conversationId={chatConversationId ?? undefined}
         peerName={chatPeerName}
       />
-      
+
     </div>
-    
-    
-   
-    
   );
 }
 

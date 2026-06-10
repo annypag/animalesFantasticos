@@ -387,9 +387,8 @@ export function ReportPetForm({
                       onFieldChange("name", event.target.value)
                     }
                     placeholder="Ej: Rocky"
-                    className={`h-11 w-full rounded-2xl border px-3 ${
-                      errors.name ? "border-red-400" : "border-border"
-                    }`}
+                    className={`h-11 w-full rounded-2xl border px-3 ${errors.name ? "border-red-400" : "border-border"
+                      }`}
                   />
                   {errors.name && (
                     <p className="text-xs text-red-500">{errors.name}</p>
@@ -398,6 +397,23 @@ export function ReportPetForm({
               ) : null}
             </div>
 
+            {isLost && (
+              <label className="space-y-1.5 text-sm sm:col-span-2">
+                <span className="font-medium">Visto por última vez</span>
+                <input
+                  value={form.lastSeen}
+                  onChange={(event) =>
+                    onFieldChange("lastSeen", event.target.value)
+                  }
+                  placeholder="Ej: Hoy a las 15:00"
+                  className={`h-11 w-full rounded-2xl border px-3 ${errors.lastSeen ? "border-red-400" : "border-border"
+                    }`}
+                />
+                {errors.lastSeen && (
+                  <p className="text-xs text-red-500">{errors.lastSeen}</p>
+                )}
+              </label>
+            )}
             <label className="space-y-1.5 text-sm sm:col-span-2">
               <span className="font-medium">{requiredLabel("Descripción")}</span>
               <textarea
@@ -406,9 +422,7 @@ export function ReportPetForm({
                 onChange={(event) =>
                   onFieldChange("description", event.target.value)
                 }
-                className={`w-full resize-none rounded-2xl border px-3 py-2 ${
-                  errors.description ? "border-red-400" : "border-border"
-                }`}
+                className={`w-full resize-none rounded-2xl border px-3 py-2 ${errors.description ? "border-red-400" : "border-border"}`}
               />
               {errors.description && (
                 <p className="text-xs text-red-500">{errors.description}</p>
@@ -419,7 +433,9 @@ export function ReportPetForm({
       </section>
 
       <section>
-        <h2 className="mb-3 text-lg font-bold">Contacto</h2>
+        <h2 className="mb-3 text-lg font-bold"><span className="font-medium">
+          {isLost ? "Contacto del dueño" : "Contacto de la persona que lo encontró"}
+        </span></h2>
 
         <div className="rounded-3xl border border-border bg-white p-4 md:p-6">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -432,9 +448,8 @@ export function ReportPetForm({
                 onChange={(event) =>
                   onFieldChange("ownerName", event.target.value)
                 }
-                className={`h-11 w-full rounded-2xl border px-3 ${
-                  errors.ownerName ? "border-red-400" : "border-border"
-                }`}
+                className={`h-11 w-full rounded-2xl border px-3 ${errors.ownerName ? "border-red-400" : "border-border"
+                  }`}
               />
               {errors.ownerName && (
                 <p className="text-xs text-red-500">{errors.ownerName}</p>
@@ -460,7 +475,7 @@ export function ReportPetForm({
             </label>
 
             <label className="space-y-1.5 text-sm">
-              <span className="font-medium">Email opcional</span>
+              <span className="font-medium">Email (opcional)</span>
               <input
                 type="email"
                 value={form.ownerEmail}
@@ -521,7 +536,7 @@ export function ReportPetForm({
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+          className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white disabled:opacity-60 ${isLost ? "bg-[var(--alert-orange)]" : "bg-primary"}`}
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {submitLabel ??
