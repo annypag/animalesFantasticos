@@ -108,6 +108,29 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
 
   return (
     <div className="absolute inset-0 z-0">
+      <div className="absolute top-3 right-3 z-[1000] bg-white/90 backdrop-blur-sm rounded-xl shadow-md px-3 py-2 flex flex-col gap-1.5 pointer-events-none">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+          Referencias
+        </span>
+        <div className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
+            alt="Perdido"
+            className="h-4 w-auto"
+          />
+          <span className="text-xs text-foreground">Perdida</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png"
+            alt="Hallado"
+            className="h-4 w-auto"
+          />
+          <span className="text-xs text-foreground">Encontrada</span>
+        </div>
+      </div>
       <MapContainer
         center={[-34.5875, -58.42]}
         zoom={13}
