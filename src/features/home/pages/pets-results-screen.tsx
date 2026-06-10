@@ -18,11 +18,12 @@ export function PetsResultsScreen() {
     filters,
     loadingDbPets,
     hasActiveFilters,
+    uniqueNeighborhoods,
+    uniqueBreeds,
     handleFilterChange,
     clearFilters,
   } = usePetsSearch();
 
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -60,11 +61,11 @@ export function PetsResultsScreen() {
       </div>
 
       <FiltersBar
-        showFilters={showFilters}
         filters={filters}
         petCount={filteredPets.length}
         hasActiveFilters={hasActiveFilters}
-        onToggle={() => setShowFilters((current) => !current)}
+        uniqueNeighborhoods={uniqueNeighborhoods}
+        uniqueBreeds={uniqueBreeds}
         onFilterChange={handleFilterChange}
         onClearFilters={clearFilters}
       />
