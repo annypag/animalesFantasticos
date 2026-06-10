@@ -293,7 +293,10 @@ export function usePetsSearch() {
       const matchesBreed =
         filters.breed === "all" || pet.breed === filters.breed;
 
+      const isNotResolved = !pet.resolvedAt;
+
       return (
+        isNotResolved &&
         matchesStatus &&
         matchesSpecies &&
         matchesSize &&

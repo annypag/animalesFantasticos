@@ -41,6 +41,9 @@ const MapEventsHandler = dynamic(
           click: (event: L.LeafletMouseEvent) => {
             onMapClick([event.latlng.lat, event.latlng.lng]);
           },
+          zoom: () => {
+            onZoomChange(map.getZoom());
+          },
           zoomend: () => {
             onZoomChange(map.getZoom());
             onBoundsChange(map);
@@ -75,6 +78,8 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
   const [zoom, setZoom] = useState(13);
   const [map, setMap] = useState<L.Map | null>(null);
   const [, setMapUpdateKey] = useState(0);
+
+  const roundedZoom = Math.round(zoom);
 
   const handleBoundsChange = useCallback((mapInstance: L.Map) => {
     setMap(mapInstance);
@@ -135,15 +140,16 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
 
   pets.forEach((pet) => {
     // 1. Calculate default size based on rounded zoom level (handles fractional zoom on pinch/scroll)
-    const roundedZoom = Math.round(zoom);
-    let baseSize = 52;
-    if (roundedZoom <= 11) baseSize = 36;
-    else if (roundedZoom === 12) baseSize = 44;
-    else if (roundedZoom === 13) baseSize = 52;
-    else if (roundedZoom === 14) baseSize = 60;
-    else if (roundedZoom === 15) baseSize = 68;
-    else if (roundedZoom === 16) baseSize = 76;
-    else baseSize = 84; // roundedZoom >= 17
+    let baseSize = 48;
+    if (roundedZoom <= 9) baseSize = 20;
+    else if (roundedZoom === 10) baseSize = 24;
+    else if (roundedZoom === 11) baseSize = 32;
+    else if (roundedZoom === 12) baseSize = 40;
+    else if (roundedZoom === 13) baseSize = 48;
+    else if (roundedZoom === 14) baseSize = 56;
+    else if (roundedZoom === 15) baseSize = 64;
+    else if (roundedZoom === 16) baseSize = 72;
+    else baseSize = 80; // roundedZoom >= 17
 
     // 2. Find minimum distance to any other visible pet on screen
     const pos1 = petPositions.find((p) => p.id === pet.id);
@@ -212,14 +218,19 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
         />
         {pets.map((pet) => {
           const pinSize = petSizes.get(pet.id) || 42;
-          const imageSize = pinSize - 6; // Subtract borders (3px each side)
-          const pinTipSize = Math.max(6, Math.round(pinSize * 0.22));
+          let borderWidth = 3;
+          if (pinSize <= 24) borderWidth = 1.5;
+          else if (pinSize <= 36) borderWidth = 2;
+          else if (pinSize <= 48) borderWidth = 2.5;
+
+          const imageSize = pinSize - borderWidth * 2;
+          const pinTipSize = Math.max(5, Math.round(pinSize * 0.22));
 
           const customIcon = leaflet.divIcon({
-            className: "",
+            className: "bg-transparent border-0",
             html: `
               <div class="custom-pet-marker ${pet.status}" style="width: ${pinSize}px; height: ${pinSize}px;">
-                <div class="custom-pet-marker-img-container" style="width: ${imageSize}px; height: ${imageSize}px;">
+                <div class="custom-pet-marker-img-container" style="width: ${imageSize}px; height: ${imageSize}px; border-width: ${borderWidth}px !important;">
                   <img src="${pet.image}" alt="${pet.name}" class="custom-pet-marker-img" />
                 </div>
                 <div class="custom-pet-marker-pin" style="bottom: -${Math.round(pinTipSize / 2)}px; width: ${pinTipSize}px; height: ${pinTipSize}px;"></div>

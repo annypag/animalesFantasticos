@@ -1,15 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CirclePlus, LogOut, PawPrint, User } from "lucide-react";
+import { CirclePlus, LogOut, Moon, PawPrint, Sun, User } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { NotificationsBell } from "@/features/notifications/components/notifications-bell";
+import { useTheme } from "@/hooks/use-theme";
 
 export function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -73,6 +81,18 @@ export function AppNavbar() {
               <CirclePlus className="h-4 w-4" />
               <span>Nuevo reporte</span>
             </button>
+
+            {/* Theme toggle */}
+            {mounted && (
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+            )}
 
             <NotificationsBell enabled={Boolean(user)} />
 
@@ -143,7 +163,7 @@ export function AppNavbar() {
 
       {/* Navbar Mobile — barra inferior */}
       <nav className="fixed inset-x-0 bottom-0 z-[1300] border-t border-border bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2 safe-bottom">
+        <div className="mx-auto grid grid-cols-5 px-2 py-2 safe-bottom">
           {/* Inicio */}
           <Link
             href="/"
@@ -165,6 +185,19 @@ export function AppNavbar() {
             <CirclePlus className="h-5 w-5" />
             <span>Reportar</span>
           </Link>
+
+          {/* Theme toggle mobile */}
+          {mounted && (
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Modo claro" : "Modo oscuro"}
+              className="flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted cursor-pointer"
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              <span>{theme === "dark" ? "Claro" : "Oscuro"}</span>
+            </button>
+          )}
 
           {user ? (
             <>
