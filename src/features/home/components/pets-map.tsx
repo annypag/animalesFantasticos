@@ -2,10 +2,11 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type L from "leaflet";
 import { Pet } from "@/features/home/types";
 
+// Dynamic loading of Leaflet MapContainer, TileLayer, Marker, and Popup
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false },
@@ -22,19 +23,39 @@ const Popup = dynamic(
   () => import("react-leaflet").then((mod) => mod.Popup),
   { ssr: false },
 );
-const MapClickCapture = dynamic(
+
+// Stable dynamic wrapper for map event handling to avoid inline component recreation
+const MapEventsHandler = dynamic(
   () =>
     import("react-leaflet").then((mod) => {
-      return function MapClickCaptureImpl({
+      return function MapEventsHandlerImpl({
         onMapClick,
+        onZoomChange,
+        onBoundsChange,
       }: {
         onMapClick: (coordinates: [number, number]) => void;
+        onZoomChange: (zoom: number) => void;
+        onBoundsChange: (map: L.Map) => void;
       }) {
-        mod.useMapEvents({
+        const map = mod.useMapEvents({
           click: (event: L.LeafletMouseEvent) => {
             onMapClick([event.latlng.lat, event.latlng.lng]);
           },
+          zoomend: () => {
+            onZoomChange(map.getZoom());
+            onBoundsChange(map);
+          },
+          moveend: () => {
+            onBoundsChange(map);
+          },
         });
+
+        // Initialize state on mount
+        useEffect(() => {
+          onZoomChange(map.getZoom());
+          onBoundsChange(map);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [map]);
 
         return null;
       };
@@ -51,6 +72,14 @@ interface PetsMapProps {
 
 export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMapProps) {
   const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
+  const [zoom, setZoom] = useState(13);
+  const [map, setMap] = useState<L.Map | null>(null);
+  const [, setMapUpdateKey] = useState(0);
+
+  const handleBoundsChange = useCallback((mapInstance: L.Map) => {
+    setMap(mapInstance);
+    setMapUpdateKey((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -86,6 +115,66 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
     );
   }
 
+  // Calculate dynamic sizes based on zoom and distance to neighbors
+  const visiblePets = map
+    ? pets.filter((pet) => map.getBounds().contains(pet.coordinates))
+    : pets;
+
+  const petPositions = map
+    ? visiblePets.map((pet) => {
+      const pt = map.latLngToLayerPoint(pet.coordinates);
+      return {
+        id: pet.id,
+        x: pt.x,
+        y: pt.y,
+      };
+    })
+    : [];
+
+  const petSizes = new Map<string, number>();
+
+  pets.forEach((pet) => {
+    // 1. Calculate default size based on rounded zoom level (handles fractional zoom on pinch/scroll)
+    const roundedZoom = Math.round(zoom);
+    let baseSize = 52;
+    if (roundedZoom <= 11) baseSize = 36;
+    else if (roundedZoom === 12) baseSize = 44;
+    else if (roundedZoom === 13) baseSize = 52;
+    else if (roundedZoom === 14) baseSize = 60;
+    else if (roundedZoom === 15) baseSize = 68;
+    else if (roundedZoom === 16) baseSize = 76;
+    else baseSize = 84; // roundedZoom >= 17
+
+    // 2. Find minimum distance to any other visible pet on screen
+    const pos1 = petPositions.find((p) => p.id === pet.id);
+    let minDistance = Infinity;
+
+    if (pos1) {
+      petPositions.forEach((pos2) => {
+        if (pos2.id === pet.id) return;
+        const dx = pos1.x - pos2.x;
+        const dy = pos1.y - pos2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDistance) {
+          minDistance = dist;
+        }
+      });
+    }
+
+    // 3. Collision avoidance:
+    // If they are extremely close (under 45px), keep them compact (max 44px)
+    // If they are moderately close (45px to 75px), limit to a medium size (max 56px)
+    // Otherwise, allow them to grow to their full base size
+    let pinSize = baseSize;
+    if (minDistance < 45) {
+      pinSize = Math.min(baseSize, 44);
+    } else if (minDistance < 75) {
+      pinSize = Math.min(baseSize, 56);
+    }
+
+    petSizes.set(pet.id, pinSize);
+  });
+
   return (
     <div className="absolute inset-0 z-0">
       <div className="absolute top-3 right-3 z-[1000] bg-white/80 backdrop-blur-md border border-slate-200/50 rounded-xl shadow-lg p-3 flex flex-col gap-2 pointer-events-none">
@@ -109,33 +198,41 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
         center={[-34.5875, -58.42]}
         zoom={13}
         className="h-full w-full z-0"
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
       >
-        <MapClickCapture onMapClick={onMapClick} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapEventsHandler
+          onMapClick={onMapClick}
+          onZoomChange={setZoom}
+          onBoundsChange={handleBoundsChange}
+        />
         {pets.map((pet) => {
+          const pinSize = petSizes.get(pet.id) || 42;
+          const imageSize = pinSize - 6; // Subtract borders (3px each side)
+          const pinTipSize = Math.max(6, Math.round(pinSize * 0.22));
+
           const customIcon = leaflet.divIcon({
             className: "",
             html: `
-              <div class="custom-pet-marker ${pet.status}">
-                <div class="custom-pet-marker-img-container">
+              <div class="custom-pet-marker ${pet.status}" style="width: ${pinSize}px; height: ${pinSize}px;">
+                <div class="custom-pet-marker-img-container" style="width: ${imageSize}px; height: ${imageSize}px;">
                   <img src="${pet.image}" alt="${pet.name}" class="custom-pet-marker-img" />
                 </div>
-                <div class="custom-pet-marker-pin"></div>
+                <div class="custom-pet-marker-pin" style="bottom: -${Math.round(pinTipSize / 2)}px; width: ${pinTipSize}px; height: ${pinTipSize}px;"></div>
               </div>
             `,
-            iconSize: [48, 48],
-            iconAnchor: [24, 46],
-            popupAnchor: [0, -42],
+            iconSize: [pinSize, pinSize],
+            iconAnchor: [pinSize / 2, pinSize],
+            popupAnchor: [0, -pinSize - 4],
           });
 
           return (
             <Marker
-              key={pet.id}
+              key={`${pet.id}-${pinSize}`}
               position={pet.coordinates}
               icon={customIcon}
               eventHandlers={{
@@ -161,7 +258,6 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
                     className="mb-2 h-32 w-full rounded-lg object-cover"
                   />
 
-                  {/* Cambiamos <p> y <h4> por <div> para evadir el CSS por defecto de Leaflet */}
                   <div className="mb-3 flex flex-col gap-0.5">
                     <div className="text-sm font-semibold leading-none text-foreground">
                       {pet.name}
