@@ -18,7 +18,10 @@ export interface RegisterInput {
 }
 
 export interface AuthRepository {
-  findByEmail(email: string): Promise<AuthUser & { passwordHash: string } | null>;
+  findByEmail(email: string): Promise<(AuthUser & { passwordHash: string | null }) | null>;
+  findByGoogleId(googleId: string): Promise<AuthUser | null>;
   create(input: RegisterInput): Promise<AuthUser>;
+  createGoogleUser(input: { fullName: string; email: string; googleId: string }): Promise<AuthUser>;
+  linkGoogleAccount(userId: number, googleId: string): Promise<void>;
   validatePassword(plain: string, hash: string): Promise<boolean>;
 }

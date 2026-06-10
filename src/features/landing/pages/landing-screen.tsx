@@ -166,7 +166,7 @@ export function LandingScreen() {
                   ¿Qué pasa si encuentro a mi mascota?
                   <span className="text-primary group-open:rotate-45 transition-transform text-2xl leading-none">+</span>
                 </summary>
-                <p className="mt-4 text-muted-foreground leading-relaxed">Podrás marcar tu reporte como "Resuelto" desde tu panel de usuario. Esto ocultará el pin para mantener el mapa organizado y actualizado para los demás.</p>
+                <p className="mt-4 text-muted-foreground leading-relaxed">Podrás marcar tu reporte como &quot;Resuelto&quot; desde tu panel de usuario. Esto ocultará el pin para mantener el mapa organizado y actualizado para los demás.</p>
               </details>
 
               <details className="bg-white border border-border rounded-2xl p-5 group cursor-pointer shadow-sm">

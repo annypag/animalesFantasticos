@@ -7,6 +7,10 @@ export async function loginUser(repository: AuthRepository, input: LoginInput): 
     throw new AuthError("Email o contraseña incorrectos.", 401);
   }
 
+  if (user.passwordHash === null) {
+    throw new AuthError("Esta cuenta está registrada con Google. Por favor, iniciá sesión con Google.", 400);
+  }
+
   const valid = await repository.validatePassword(input.password, user.passwordHash);
   if (!valid) {
     throw new AuthError("Email o contraseña incorrectos.", 401);
