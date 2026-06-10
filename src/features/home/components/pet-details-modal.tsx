@@ -108,6 +108,9 @@ export function PetDetailsModal({
   };
 
   async function handleResolve() {
+    if (!pet) {
+      return;
+    }
     if (!window.confirm("¿Confirmás que este caso ya se resolvió? Se cerrará el chat.")) {
       return;
     }
@@ -152,6 +155,7 @@ export function PetDetailsModal({
         </div>
 
         <div className="p-6">
+          <div className="mb-4">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-semibold">{pet.name}</h2>
               <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide border ${badgeClasses}`}>
@@ -172,9 +176,17 @@ export function PetDetailsModal({
               </div>
             </div>
             {isResolved && (
-              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                Caso resuelto
-              </p>
+              <div className="mt-4 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3 text-emerald-800">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+                  </svg>
+                </div>
+                <div>
+                  <h5 className="font-bold text-sm">¡Caso Resuelto!</h5>
+                  <p className="text-xs text-emerald-700 mt-0.5">Esta mascota ya ha sido devuelta a su familia o se ha solucionado el reporte.</p>
+                </div>
+              </div>
             )}
           </div>
 

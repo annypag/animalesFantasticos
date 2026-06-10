@@ -22,6 +22,7 @@ export function PetsResultsScreen() {
     uniqueBreeds,
     handleFilterChange,
     clearFilters,
+    refreshPets,
   } = usePetsSearch();
 
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
@@ -83,6 +84,7 @@ export function PetsResultsScreen() {
         pet={selectedPet}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        onResolved={refreshPets}
       />
     </main>
   );
