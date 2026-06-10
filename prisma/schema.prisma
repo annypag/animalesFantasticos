@@ -13,7 +13,8 @@ model User {
   fullName     String     @map("full_name")
   email        String     @unique // ¡Importante para el login!
   phone        String?
-  passwordHash String     @map("password_hash")
+  passwordHash String?    @map("password_hash")
+  googleId     String?    @unique @map("google_id")
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   
@@ -101,4 +102,34 @@ model Message {
 
   @@index([conversationId, createdAt(sort: Asc)], map: "messages_conversation_created_idx")
   @@map("messages")
+}
+
+enum MatchJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+model MatchJob {
+  id        BigInt         @id @default(autoincrement()) @db.BigInt
+  petKind   PetReportKind  @map("pet_kind")
+  petId     BigInt         @map("pet_id") @db.BigInt
+  status    MatchJobStatus @default(PENDING)
+  attempts  Int            @default(0)
+  lastError String?        @map("last_error")
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("match_jobs")
+}
+
+model PetMatch {
+  lostPetId   BigInt   @map("lost_pet_id") @db.BigInt
+  foundPetId  BigInt   @map("found_pet_id") @db.BigInt
+  score       Float
+  explanation String?
+  computedAt  DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@id([lostPetId, foundPetId])
+  @@map("pet_matches")
 }

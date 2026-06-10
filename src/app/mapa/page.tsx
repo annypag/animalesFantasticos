@@ -1,4 +1,4 @@
-// src/app/mapa/page.tsx
+import { Suspense } from 'react';
 import 'leaflet/dist/leaflet.css'; // Mantenemos el import de Leaflet aquí como dicta AGENTS.md
 import { HomeScreen } from '@/features/home/pages/home-screen'; 
 
@@ -8,5 +8,9 @@ export const metadata = {
 };
 
 export default function MapaPage() {
-  return <HomeScreen />;
+  return (
+    <Suspense fallback={null}>
+      <HomeScreen />
+    </Suspense>
+  );
 }
