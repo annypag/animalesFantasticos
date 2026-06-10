@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CirclePlus, LogOut, PawPrint, User } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { NotificationsBell } from "@/features/notifications/components/notifications-bell";
 
 export function AppNavbar() {
   const pathname = usePathname();
@@ -73,6 +74,8 @@ export function AppNavbar() {
               <span>Nuevo reporte</span>
             </button>
 
+            <NotificationsBell enabled={Boolean(user)} />
+
             {user ? (
               <>
                 {/* Botón con nombre del usuario → va a Mi Perfil */}
@@ -131,6 +134,12 @@ export function AppNavbar() {
           </div>
         </div>
       </nav>
+
+      {user ? (
+        <div className="fixed right-4 top-4 z-[1400] md:hidden">
+          <NotificationsBell enabled />
+        </div>
+      ) : null}
 
       {/* Navbar Mobile — barra inferior */}
       <nav className="fixed inset-x-0 bottom-0 z-[1300] border-t border-border bg-white/95 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">

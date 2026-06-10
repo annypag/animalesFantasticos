@@ -18,6 +18,7 @@ function mapLostPetRecord(pet: {
   longitude: number;
   lastSeen: string;
   createdAt: Date;
+  resolvedAt: Date | null;
   user: {
     id: bigint;
     fullName: string;
@@ -41,6 +42,7 @@ function mapLostPetRecord(pet: {
     lastSeen: pet.lastSeen,
     reportDate: pet.createdAt.toISOString(),
     createdAt: pet.createdAt.toISOString(),
+    resolvedAt: pet.resolvedAt?.toISOString() ?? null,
     owner: {
       id: Number(pet.user.id),
       fullName: pet.user.fullName,
@@ -66,6 +68,7 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
   async listLostPets(filters?: LostPetFilters): Promise<LostPet[]> {
     const pets = await prisma.lostPet.findMany({
       where: {
+        resolvedAt: null,
         ...(filters?.neighborhood
           ? {
               locationText: {
@@ -144,5 +147,27 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
     });
 
     return mapLostPetRecord(createdPet);
+  }
+
+  async resolveLostPet(petId: number, userId: number): Promise<LostPet | null> {
+    const result = await prisma.lostPet.updateMany({
+      where: {
+        id: BigInt(petId),
+        userId: BigInt(userId),
+        resolvedAt: null,
+      },
+      data: { resolvedAt: new Date() },
+    });
+
+    if (result.count === 0) {
+      return null;
+    }
+
+    const pet = await prisma.lostPet.findUnique({
+      where: { id: BigInt(petId) },
+      include: { user: true },
+    });
+
+    return pet ? mapLostPetRecord(pet) : null;
   }
 }

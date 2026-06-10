@@ -25,6 +25,7 @@ export interface LostPet {
   lastSeen: string;
   reportDate: string;
   createdAt: string;
+  resolvedAt: string | null;
   owner: LostPetOwner;
 }
 

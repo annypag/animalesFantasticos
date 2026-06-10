@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Calendar, MapPin, X } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 import { formatAbsoluteDateTime } from "@/features/home/lib/pet-utils";
 import { Pet } from "@/features/home/types";
 import { ChatModal } from "@/features/messaging/components/chat-modal";
+import { resolvePetReport } from "@/features/home/lib/resolve-pet-report-api";
+import { isSavedPetReport } from "@/features/messaging/lib/parse-pet-ref";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -48,21 +51,72 @@ interface PetDetailsModalProps {
   pet: Pet | null;
   open: boolean;
   onClose: () => void;
+  openChatOnMount?: boolean;
+  chatConversationId?: number | null;
+  chatPeerName?: string | null;
+  onResolved?: () => void;
 }
 
-export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
-
+export function PetDetailsModal({
+  pet,
+  open,
+  onClose,
+  openChatOnMount = false,
+  chatConversationId = null,
+  chatPeerName = null,
+  onResolved,
+}: PetDetailsModalProps) {
+  const { user } = useAuth();
   const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && openChatOnMount && chatConversationId && !pet?.resolvedAt) {
+      setChatModalOpen(true);
+    }
+  }, [open, openChatOnMount, chatConversationId, pet?.resolvedAt]);
 
   if (!open || !pet) {
     return null;
   }
 
-  // Función para cerrar todo de forma limpia
+  const isOwner = Boolean(user?.id && pet.ownerId && user.id === pet.ownerId);
+  const isResolved = Boolean(pet.resolvedAt);
+  const chatEnabled = isSavedPetReport(pet.id) && !isResolved;
+  const canStartChat = chatEnabled && !isOwner;
+  const resolveLabel =
+    pet.status === "lost"
+      ? "Marcar como resuelto (ya lo encontré)"
+      : "Marcar como resuelto (ya lo devolví)";
+
   const handleClose = () => {
     setChatModalOpen(false);
+    setResolveError(null);
     onClose();
   };
+
+  async function handleResolve() {
+    if (!window.confirm("¿Confirmás que este caso ya se resolvió? Se cerrará el chat.")) {
+      return;
+    }
+
+    setResolving(true);
+    setResolveError(null);
+
+    try {
+      await resolvePetReport(pet.id);
+      setChatModalOpen(false);
+      onResolved?.();
+      handleClose();
+    } catch (error) {
+      setResolveError(
+        error instanceof Error ? error.message : "No se pudo cerrar la publicación.",
+      );
+    } finally {
+      setResolving(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4">
@@ -102,6 +156,11 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
             <p className="text-sm text-muted-foreground">
               {pet.species} • {pet.breed}
             </p>
+            {isResolved && (
+              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                Caso resuelto
+              </p>
+            )}
           </div>
 
           <div className="mb-6 grid gap-4 rounded-xl bg-secondary/50 p-4 sm:grid-cols-2">
@@ -158,15 +217,43 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
             </div>
           </div>
 
-         {/* BOTON MODIFICADO: Ahora abre el segundo modal y el texto es blanco */}
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={() => setChatModalOpen(true)}
-                className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-sm font-semibold text-white hover:bg-primary/90"
-              >
-                Chatear
-              </button>
-          </div>
+            {canStartChat && (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setChatModalOpen(true)}
+                  className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-sm font-semibold text-white hover:bg-primary/90"
+                >
+                  Chatear
+                </button>
+              </div>
+            )}
+
+            {isOwner && chatEnabled && (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-muted-foreground">
+                  Si alguien escribe sobre tu publicación, vas a verlo en la campana de
+                  notificaciones. Cada persona tiene su propio chat.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleResolve()}
+                  disabled={resolving}
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                >
+                  {resolving ? "Cerrando publicación..." : resolveLabel}
+                </button>
+                {resolveError && (
+                  <p className="text-sm text-red-600">{resolveError}</p>
+                )}
+              </div>
+            )}
+
+            {isResolved && (
+              <p className="text-sm text-muted-foreground">
+                Esta publicación está cerrada. El chat ya no está disponible.
+              </p>
+            )}
         </div>
       </div>
 
@@ -175,6 +262,8 @@ export function PetDetailsModal({ pet, open, onClose }: PetDetailsModalProps) {
         open={chatModalOpen}
         onClose={() => setChatModalOpen(false)}
         pet={pet}
+        conversationId={chatConversationId ?? undefined}
+        peerName={chatPeerName}
       />
       
     </div>

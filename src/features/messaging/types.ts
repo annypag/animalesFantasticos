@@ -6,12 +6,14 @@ export type ApiConversation = {
   id: number;
   petKind: PetReportKind;
   petId: number;
+  participantUserId: number;
   createdAt: string;
 };
 
 export type ApiChatMessage = {
   id: number;
   conversationId: number;
+  senderUserId: number;
   senderName: string;
   body: string | null;
   imageUrl: string | null;

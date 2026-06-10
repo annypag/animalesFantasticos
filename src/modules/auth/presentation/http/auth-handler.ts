@@ -7,6 +7,7 @@ import { signToken } from "@/lib/auth/jwt";
 import { setSessionCookie, clearSessionCookie, getSessionToken } from "@/lib/auth/session";
 import { verifyToken } from "@/lib/auth/jwt";
 import { authenticateGoogleUser } from "@/modules/auth/application/use-cases/google-auth";
+import { prisma } from "@/lib/prisma";
 
 const repository = new PrismaAuthRepository();
 
@@ -91,15 +92,53 @@ export async function handleGetMe(request: Request) {
 
   const payload = await verifyToken(token);
   if (!payload) {
-    return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
+    const response = NextResponse.json(
+      { message: "Sesión inválida o expirada." },
+      { status: 401 },
+    );
+    clearSessionCookie(response);
+    return response;
+  }
+
+  const userId = Number(payload.sub);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    const response = NextResponse.json(
+      { message: "Sesión inválida o expirada." },
+      { status: 401 },
+    );
+    clearSessionCookie(response);
+    return response;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: BigInt(userId) },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      phone: true,
+    },
+  });
+
+  if (!user) {
+    const response = NextResponse.json(
+      {
+        message:
+          "Tu cuenta ya no existe en la base de datos (por ejemplo, después de un reset). Volvé a registrarte o iniciá sesión.",
+      },
+      { status: 401 },
+    );
+    clearSessionCookie(response);
+    return response;
   }
 
   return NextResponse.json(
     {
       user: {
-        id: Number(payload.sub),
-        email: payload.email,
-        fullName: payload.fullName,
+        id: Number(user.id),
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
       },
     },
     { status: 200 },
@@ -110,7 +149,7 @@ export async function handleGoogleLoginRedirect(request: Request) {
   const url = new URL(request.url);
   const redirect = url.searchParams.get("redirect") ?? "/";
   const state = encodeURIComponent(redirect);
-  
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const redirectUri = `${appUrl}/api/auth/google/callback`;

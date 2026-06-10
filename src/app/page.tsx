@@ -1,12 +1,16 @@
+import { Suspense } from "react";
 import "leaflet/dist/leaflet.css";
-//import { HomeScreen } from "@/features/home/pages/home-screen";
-import { LandingScreen } from '@/features/landing/pages/landing-screen';
+import { LandingScreen } from "@/features/landing/pages/landing-screen";
 
 export const metadata = {
-  title: 'Animales Fantásticos - Inicio',
-  description: 'La red comunitaria para reportar mascotas perdidas y encontradas.',
+  title: "Animales Fantásticos - Inicio",
+  description: "La red comunitaria para reportar mascotas perdidas y encontradas.",
 };
 
 export default function HomePage() {
-  return <LandingScreen />;
+  return (
+    <Suspense fallback={null}>
+      <LandingScreen />
+    </Suspense>
+  );
 }

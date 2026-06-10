@@ -14,8 +14,10 @@ export interface Pet {
   location: string;
   coordinates: [number, number];
   description: string;
+  ownerId?: number;
   ownerName?: string;
   ownerPhone?: string;
+  resolvedAt?: string | null;
 }
 
 export interface ApiFoundPet {
@@ -31,9 +33,11 @@ export interface ApiFoundPet {
   latitude: number;
   longitude: number;
   foundAt: string;
+  resolvedAt?: string | null;
   owner: {
+    id: number;
     fullName: string;
-    phone: string;
+    phone: string | null;
   };
 }
 
@@ -50,9 +54,11 @@ export interface ApiLostPet {
   longitude: number;
   lastSeen: string;
   createdAt: string;
+  resolvedAt?: string | null;
   owner: {
+    id: number;
     fullName: string;
-    phone: string;
+    phone: string | null;
     email: string | null;
   };
 }

@@ -14,4 +14,5 @@ export interface FoundPetFilters {
 export interface FoundPetsRepository {
   listFoundPets(filters?: FoundPetFilters): Promise<FoundPet[]>;
   createFoundPet(input: RegisterFoundPetInput): Promise<FoundPet>;
+  resolveFoundPet(petId: number, userId: number): Promise<FoundPet | null>;
 }
