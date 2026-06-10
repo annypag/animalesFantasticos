@@ -119,7 +119,7 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
             alt="Perdido"
             className="h-4 w-auto"
           />
-          <span className="text-xs text-foreground">Perdido</span>
+          <span className="text-xs text-foreground">Perdida</span>
         </div>
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -128,7 +128,7 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
             alt="Hallado"
             className="h-4 w-auto"
           />
-          <span className="text-xs text-foreground">Hallado</span>
+          <span className="text-xs text-foreground">Encontrada</span>
         </div>
       </div>
       <MapContainer
