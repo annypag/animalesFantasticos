@@ -9,6 +9,7 @@ import { SelectedReportPetModal } from "@/features/home/components/selected-repo
 import { Pet } from "@/features/home/types";
 import type { ReportType } from "@/features/report/types/types";
 import { ViewPetsListButton } from "../components/view-pets-list-button";
+import { VisualSearchWidget } from "@/features/matching/components/visual-search-widget";
 import { useRouter } from "next/navigation";
 import { usePetsSearch } from "../hooks/use-pets-search";
 
@@ -120,6 +121,7 @@ export function HomeScreen() {
             petCount={filteredPets.length}
             onClick={handleViewList}
           />
+          <VisualSearchWidget />
         </div>
       </div>
 

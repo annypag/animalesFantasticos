@@ -9,7 +9,12 @@
     "lint": "eslint",
     "db:up": "docker compose up -d postgres pgadmin",
     "db:down": "docker compose down",
-    "db:logs": "docker compose logs -f postgres pgadmin"
+    "db:logs": "docker compose logs -f postgres pgadmin",
+    "db:seed": "prisma db seed",
+    "db:backfill": "npx tsx prisma/backfill-embeddings.ts"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

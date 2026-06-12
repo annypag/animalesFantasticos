@@ -3,9 +3,11 @@ import { listFoundPets } from "@/modules/found-pets/application/use-cases/list-f
 import { registerFoundPet } from "@/modules/found-pets/application/use-cases/register-found-pet";
 import { validateRegisterFoundPetPayload } from "@/modules/found-pets/application/validators/register-found-pet";
 import { PrismaFoundPetsRepository } from "@/modules/found-pets/infrastructure/prisma-found-pets-repository";
+import { VectorSearchRepository } from "@/modules/matching/infrastructure/vector-search-repository";
 import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 
 const repository = new PrismaFoundPetsRepository();
+const vectorRepo = new VectorSearchRepository();
 
 function asOptionalNumber(value: string | null): number | undefined {
   if (!value) {
@@ -59,7 +61,7 @@ export async function handlePostFoundPets(request: Request) {
 
     const body = (await request.json()) as unknown;
     const input = validateRegisterFoundPetPayload(body, userId);
-    const pet = await registerFoundPet(repository, input);
+    const pet = await registerFoundPet(repository, input, vectorRepo);
 
     return NextResponse.json({ pet }, { status: 201 });
   } catch (error) {

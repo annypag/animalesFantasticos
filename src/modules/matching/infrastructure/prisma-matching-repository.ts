@@ -5,7 +5,10 @@ function normalizedText(value: string): string {
   return value.trim().toLowerCase();
 }
 
-function computeHeuristicScore(lost: { species: string; breed: string; neighborhood: string }, found: { species: string; breed: string; neighborhood: string }): number {
+function computeHeuristicScore(
+  lost: { species: string; breed: string; neighborhood?: string },
+  found: { species: string; breed: string; neighborhood: string },
+): number {
   let score = 0;
   if (normalizedText(lost.species) === normalizedText(found.species)) {
     score += 0.45;
@@ -15,7 +18,10 @@ function computeHeuristicScore(lost: { species: string; breed: string; neighborh
     score += 0.35;
   }
 
-  if (normalizedText(lost.neighborhood) === normalizedText(found.neighborhood)) {
+  if (
+    lost.neighborhood &&
+    normalizedText(lost.neighborhood) === normalizedText(found.neighborhood)
+  ) {
     score += 0.2;
   }
 
@@ -49,7 +55,7 @@ export class PrismaMatchingRepository {
         if (job.petKind === "LOST") {
           const lost = await prisma.lostPet.findUnique({ where: { id: job.petId } });
           if (lost) {
-            const foundPets = await prisma.foundPet.findMany({ where: { publicationStatus: "PUBLISHED" } });
+            const foundPets = await prisma.foundPet.findMany();
             for (const found of foundPets) {
               const score = computeHeuristicScore(lost, found);
               if (score >= threshold) {
