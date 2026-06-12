@@ -28,47 +28,73 @@ export class VectorSearchRepository {
   async findSimilarFoundPets(
     queryEmbedding: number[],
     limit = 5,
+    species?: string,
   ): Promise<VectorMatch[]> {
     const vectorLiteral = `[${queryEmbedding.join(",")}]`;
-    const rows = await prisma.$queryRaw<
-      Array<{
-        id: bigint;
-        score: number;
-        name: string;
-        species: string;
-        breed: string;
-        image_url: string;
-        neighborhood: string;
-        location_text: string;
-        latitude: number;
-        longitude: number;
-        found_at: Date;
-        full_name: string;
-        phone: string | null;
-        email: string;
-      }>
-    >`
-      SELECT
-        fp.id,
-        1 - (fp.embedding <=> ${vectorLiteral}::vector) AS score,
-        fp.name,
-        fp.species,
-        fp.breed,
-        fp.image_url,
-        fp.neighborhood,
-        fp.location_text,
-        fp.latitude,
-        fp.longitude,
-        fp.found_at,
-        u.full_name,
-        u.phone,
-        u.email
-      FROM found_pets fp
-      JOIN users u ON u.id = fp.user_id
-      WHERE fp.embedding IS NOT NULL
-      ORDER BY fp.embedding <=> ${vectorLiteral}::vector
-      LIMIT ${limit}
-    `;
+    const filterBySpecies = species && species !== "Otro";
+
+    type Row = {
+      id: bigint;
+      score: number;
+      name: string;
+      species: string;
+      breed: string;
+      image_url: string;
+      neighborhood: string;
+      location_text: string;
+      latitude: number;
+      longitude: number;
+      found_at: Date;
+      full_name: string;
+      phone: string | null;
+      email: string;
+    };
+
+    const rows = filterBySpecies
+      ? await prisma.$queryRaw<Row[]>`
+          SELECT
+            fp.id,
+            1 - (fp.embedding <=> ${vectorLiteral}::vector) AS score,
+            fp.name,
+            fp.species,
+            fp.breed,
+            fp.image_url,
+            fp.neighborhood,
+            fp.location_text,
+            fp.latitude,
+            fp.longitude,
+            fp.found_at,
+            u.full_name,
+            u.phone,
+            u.email
+          FROM found_pets fp
+          JOIN users u ON u.id = fp.user_id
+          WHERE fp.embedding IS NOT NULL AND fp.species ILIKE ${species}
+          ORDER BY fp.embedding <=> ${vectorLiteral}::vector
+          LIMIT ${limit}
+        `
+      : await prisma.$queryRaw<Row[]>`
+          SELECT
+            fp.id,
+            1 - (fp.embedding <=> ${vectorLiteral}::vector) AS score,
+            fp.name,
+            fp.species,
+            fp.breed,
+            fp.image_url,
+            fp.neighborhood,
+            fp.location_text,
+            fp.latitude,
+            fp.longitude,
+            fp.found_at,
+            u.full_name,
+            u.phone,
+            u.email
+          FROM found_pets fp
+          JOIN users u ON u.id = fp.user_id
+          WHERE fp.embedding IS NOT NULL
+          ORDER BY fp.embedding <=> ${vectorLiteral}::vector
+          LIMIT ${limit}
+        `;
 
     return rows.map((row) => ({
       id: Number(row.id),

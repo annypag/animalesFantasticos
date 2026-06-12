@@ -71,10 +71,7 @@ function MatchCard({ match }: MatchCardProps) {
           {match.owner.phone && (
             <p className="text-muted-foreground">
               Tel:{" "}
-              <a
-                href={`tel:${match.owner.phone}`}
-                className="text-primary underline"
-              >
+              <a href={`tel:${match.owner.phone}`} className="text-primary underline">
                 {match.owner.phone}
               </a>
             </p>
@@ -175,14 +172,22 @@ function UploadZone({ previewUrl, onFileSelect }: UploadZoneProps) {
   );
 }
 
+const SPECIES_OPTIONS = [
+  { label: "Perro", emoji: "🐶" },
+  { label: "Gato", emoji: "🐱" },
+  { label: "Otro", emoji: "🐾" },
+];
+
 export function VisualSearchWidget() {
   const {
     widgetState,
+    species,
     previewUrl,
     matches,
     errorMessage,
     handleOpen,
     handleClose,
+    handleSpeciesSelect,
     handleImageSelect,
     handleSearch,
     reset,
@@ -263,17 +268,38 @@ export function VisualSearchWidget() {
 
           {/* Body con scroll */}
           <div className="flex flex-col gap-3 overflow-y-auto p-4" style={{ maxHeight: "70vh" }}>
-            {/* Mensaje del bot */}
-            {(widgetState === "idle" || widgetState === "loading") && (
-              <div className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                Subí una foto de tu mascota y busco posibles coincidencias entre las
-                reportadas como encontradas 🐾
-              </div>
+
+            {/* PASO 1: selección de especie */}
+            {widgetState === "species-select" && (
+              <>
+                <div className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                  Primero decime, ¿qué tipo de mascota es la que perdiste?
+                </div>
+                <div className="flex gap-2">
+                  {SPECIES_OPTIONS.map(({ label, emoji }) => (
+                    <button
+                      key={label}
+                      onClick={() => handleSpeciesSelect(label)}
+                      className="flex flex-1 flex-col items-center gap-1 rounded-xl border border-border bg-muted/30 py-3 text-sm font-medium text-foreground hover:bg-primary/10 hover:border-primary transition-colors"
+                    >
+                      <span className="text-xl">{emoji}</span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
 
-            {/* Upload zone */}
+            {/* PASO 2: upload de foto */}
             {(widgetState === "idle" || widgetState === "loading") && (
-              <UploadZone previewUrl={previewUrl} onFileSelect={handleImageSelect} />
+              <>
+                <div className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                  {species && species !== "Otro"
+                    ? `Perfecto, voy a buscar entre los ${species.toLowerCase()}s encontrados. Subí una foto de tu mascota.`
+                    : "Subí una foto de tu mascota y busco posibles coincidencias entre las reportadas como encontradas 🐾"}
+                </div>
+                <UploadZone previewUrl={previewUrl} onFileSelect={handleImageSelect} />
+              </>
             )}
 
             {/* Preview cuando ya hay imagen y se quiere cambiar */}
@@ -287,7 +313,10 @@ export function VisualSearchWidget() {
                     className="h-14 w-14 rounded-lg object-cover flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Imagen analizada</p>
+                    <p className="text-xs text-muted-foreground">
+                      Imagen analizada
+                      {species ? ` · ${species}` : ""}
+                    </p>
                     <button
                       onClick={reset}
                       className="mt-1 text-xs text-primary underline hover:no-underline"

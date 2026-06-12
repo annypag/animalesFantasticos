@@ -5,8 +5,8 @@ import type { VectorMatch } from "@/modules/matching/infrastructure/vector-searc
 
 export type WidgetState =
   | "closed"
+  | "species-select"
   | "idle"
-  | "uploading"
   | "loading"
   | "results"
   | "no-results"
@@ -14,12 +14,14 @@ export type WidgetState =
 
 interface UseVisualSearchReturn {
   widgetState: WidgetState;
+  species: string | null;
   selectedFile: File | null;
   previewUrl: string | null;
   matches: VectorMatch[];
   errorMessage: string | null;
   handleOpen: () => void;
   handleClose: () => void;
+  handleSpeciesSelect: (s: string) => void;
   handleImageSelect: (file: File) => void;
   handleSearch: () => Promise<void>;
   reset: () => void;
@@ -27,31 +29,34 @@ interface UseVisualSearchReturn {
 
 export function useVisualSearch(): UseVisualSearchReturn {
   const [widgetState, setWidgetState] = useState<WidgetState>("closed");
+  const [species, setSpecies] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [matches, setMatches] = useState<VectorMatch[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleOpen = useCallback(() => {
-    setWidgetState("idle");
+    setWidgetState("species-select");
   }, []);
 
   const handleClose = useCallback(() => {
     setWidgetState("closed");
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setSpecies(null);
     setSelectedFile(null);
     setPreviewUrl(null);
     setMatches([]);
     setErrorMessage(null);
   }, [previewUrl]);
 
+  const handleSpeciesSelect = useCallback((s: string) => {
+    setSpecies(s);
+    setWidgetState("idle");
+  }, []);
+
   const handleImageSelect = useCallback(
     (file: File) => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setWidgetState("idle");
@@ -70,6 +75,7 @@ export function useVisualSearch(): UseVisualSearchReturn {
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
+      if (species) formData.append("species", species);
 
       const response = await fetch("/api/matches/search", {
         method: "POST",
@@ -95,27 +101,28 @@ export function useVisualSearch(): UseVisualSearchReturn {
       setErrorMessage("No se pudo conectar con el servidor.");
       setWidgetState("error");
     }
-  }, [selectedFile]);
+  }, [selectedFile, species]);
 
   const reset = useCallback(() => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(null);
     setPreviewUrl(null);
     setMatches([]);
     setErrorMessage(null);
-    setWidgetState("idle");
+    setSpecies(null);
+    setWidgetState("species-select");
   }, [previewUrl]);
 
   return {
     widgetState,
+    species,
     selectedFile,
     previewUrl,
     matches,
     errorMessage,
     handleOpen,
     handleClose,
+    handleSpeciesSelect,
     handleImageSelect,
     handleSearch,
     reset,

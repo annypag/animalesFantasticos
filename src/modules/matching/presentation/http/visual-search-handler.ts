@@ -45,12 +45,16 @@ export async function handleVisualSearch(request: Request): Promise<Response> {
       );
     }
 
+    const speciesRaw = formData.get("species");
+    const species = typeof speciesRaw === "string" ? speciesRaw : undefined;
+
     const arrayBuffer = await file.arrayBuffer();
     const base64Data = Buffer.from(arrayBuffer).toString("base64");
 
     const result = await searchByImage({
       base64Data,
       mimeType: file.type,
+      species,
     });
 
     return NextResponse.json(result, { status: 200 });
