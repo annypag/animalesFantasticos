@@ -144,17 +144,19 @@ export function usePetsSearch() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const searchParamsString = searchParams.toString();
+
   const initialFilters = useMemo(() => {
-    return getFiltersFromSearchParams(new URLSearchParams(searchParams.toString()));
-  }, [searchParams]);
+    return getFiltersFromSearchParams(new URLSearchParams(searchParamsString));
+  }, [searchParamsString]);
 
   const [loadingDbPets, setLoadingDbPets] = useState(true);
   const [dbPets, setDbPets] = useState<Pet[]>([]);
   const [filters, setFilters] = useState<FiltersState>(initialFilters);
 
   useEffect(() => {
-    setFilters(initialFilters);
-  }, [initialFilters]);
+    setFilters(getFiltersFromSearchParams(new URLSearchParams(searchParamsString)));
+  }, [searchParamsString]);
 
   const fetchPets = useCallback(async () => {
     const [foundResult, lostResult] = await Promise.allSettled([
@@ -244,7 +246,7 @@ export function usePetsSearch() {
 
   const syncFiltersInUrl = useCallback(
     (nextFilters: FiltersState) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
+      const currentParams = new URLSearchParams(searchParamsString);
 
       FILTER_KEYS.forEach((key) => {
         const value = nextFilters[key];
@@ -263,7 +265,7 @@ export function usePetsSearch() {
 
       router.replace(nextUrl, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParamsString],
   );
 
   const pets = useMemo(() => {
