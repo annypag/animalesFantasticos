@@ -7,6 +7,8 @@ import { signToken } from "@/lib/auth/jwt";
 import { setSessionCookie, clearSessionCookie, getSessionToken } from "@/lib/auth/session";
 import { verifyToken } from "@/lib/auth/jwt";
 import { authenticateGoogleUser } from "@/modules/auth/application/use-cases/google-auth";
+import { prisma } from "@/lib/prisma";
+
 
 const repository = new PrismaAuthRepository();
 
@@ -84,27 +86,112 @@ export function handlePostLogout() {
 }
 
 export async function handleGetMe(request: Request) {
+  // 1. Obtenemos el token del request
   const token = getSessionToken(request);
   if (!token) {
     return NextResponse.json({ message: "No autenticado." }, { status: 401 });
   }
 
+ 
   const payload = await verifyToken(token);
-  if (!payload) {
+  if (!payload || !payload.sub) {
     return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
   }
 
-  return NextResponse.json(
-    {
-      user: {
-        id: Number(payload.sub),
-        email: payload.email,
-        fullName: payload.fullName,
+  try {
+    
+    const dbUser = await prisma.user.findUnique({
+      where: { id: Number(payload.sub) } 
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ message: "Usuario no encontrado." }, { status: 404 });
+    }
+
+    // 4. Retornamos los datos frescos directos de la base de datos
+    return NextResponse.json(
+      {
+        user: {
+          id: Number(dbUser.id),
+          email: dbUser.email,
+          fullName: dbUser.fullName,
+          phone: dbUser.phone || null, 
+        },
       },
-    },
-    { status: 200 },
-  );
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error al obtener usuario actual:", error);
+    return NextResponse.json(
+      { message: "Error interno del servidor." }, 
+      { status: 500 }
+    );
+  }
 }
+
+
+export async function handleUpdateMe(request: Request) {
+  try {
+    
+    const token = getSessionToken(request);
+    if (!token) {
+      return NextResponse.json({ message: "No autenticado." }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload || !payload.sub) {
+      return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
+    }
+
+   
+    const body = await request.json();
+    const { fullName, phone } = body;
+
+    if (!fullName || fullName.trim() === "") {
+      return NextResponse.json(
+        { message: "El nombre completo es obligatorio." },
+        { status: 400 }
+      );
+    }
+
+    
+    const userId = Number(payload.sub);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        fullName: fullName.trim(),
+        phone: phone ? phone.trim() : null,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+      }
+    });
+
+    
+return NextResponse.json(
+      {
+        message: "Perfil actualizado con éxito.",
+        user: {
+          ...updatedUser,
+          id: Number(updatedUser.id), // <-- Convertimos explícitamente el BigInt a Number
+        },
+      },
+      { status: 200 }
+    );
+
+  } catch (error: any) {
+    console.error("Error en handleUpdateMe:", error);
+    return NextResponse.json(
+      { message: "Error interno del servidor al actualizar el perfil." },
+      { status: 500 }
+    );
+  }
+}
+
 
 export async function handleGoogleLoginRedirect(request: Request) {
   const url = new URL(request.url);
