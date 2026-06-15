@@ -6,9 +6,9 @@ type RouteContext = {
   params: Promise<{ conversationId: string }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { conversationId } = await context.params;
-  return handleGetMessages(conversationId);
+  return handleGetMessages(conversationId, request);
 }
 
 export async function POST(request: Request, context: RouteContext) {

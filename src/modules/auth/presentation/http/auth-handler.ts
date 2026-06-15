@@ -86,103 +86,102 @@ export function handlePostLogout() {
 }
 
 export async function handleGetMe(request: Request) {
-  // 1. Obtenemos el token del request
-  const token = getSessionToken(request);
-  if (!token) {
-    return NextResponse.json({ message: "No autenticado." }, { status: 401 });
-  }
-
- 
-  const payload = await verifyToken(token);
-  if (!payload || !payload.sub) {
-    return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
-  }
-
   try {
-    
-    const dbUser = await prisma.user.findUnique({
-      where: { id: Number(payload.sub) } 
-    });
-
-    if (!dbUser) {
-      return NextResponse.json({ message: "Usuario no encontrado." }, { status: 404 });
-    }
-
-    // 4. Retornamos los datos frescos directos de la base de datos
-    return NextResponse.json(
-      {
-        user: {
-          id: Number(dbUser.id),
-          email: dbUser.email,
-          fullName: dbUser.fullName,
-          phone: dbUser.phone || null, 
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error al obtener usuario actual:", error);
-    return NextResponse.json(
-      { message: "Error interno del servidor." }, 
-      { status: 500 }
-    );
-  }
-}
-
-
-export async function handleUpdateMe(request: Request) {
-  try {
-    
+    // 1. Obtenemos el token del request
     const token = getSessionToken(request);
     if (!token) {
       return NextResponse.json({ message: "No autenticado." }, { status: 401 });
     }
 
     const payload = await verifyToken(token);
-    if (!payload || !payload.sub) {
+    if (!payload) {
       return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
     }
 
-   
-    const body = await request.json();
-    const { fullName, phone } = body;
+    const user = await prisma.user.findUnique({
+      where: { id: BigInt(payload.sub) },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+      },
+    });
 
-    if (!fullName || fullName.trim() === "") {
-      return NextResponse.json(
-        { message: "El nombre completo es obligatorio." },
-        { status: 400 }
-      );
+    if (!user) {
+      return NextResponse.json({ message: "Usuario no encontrado." }, { status: 404 });
     }
 
-    
-    const userId = Number(payload.sub);
+    return NextResponse.json(
+      {
+        user: {
+          ...user,
+          id: Number(user.id),
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error en handleGetMe:", error);
+    return NextResponse.json(
+      { message: "Error interno del servidor al obtener el perfil." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function handleUpdateMe(request: Request) {
+  try {
+    const token = getSessionToken(request);
+    if (!token) {
+      return NextResponse.json({ message: "No autenticado." }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
+    }
+
+    const body = (await request.json()) as { fullName?: unknown; phone?: unknown };
+    const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
+    const phone = typeof body.phone === "string" ? body.phone.trim() : null;
+
+    if (!fullName) {
+      return NextResponse.json({ message: "El nombre es requerido." }, { status: 400 });
+    }
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: BigInt(payload.sub) },
       data: {
-        fullName: fullName.trim(),
-        phone: phone ? phone.trim() : null,
+        fullName,
+        phone,
       },
       select: {
         id: true,
         email: true,
         fullName: true,
         phone: true,
-      }
+      },
     });
 
-    
-return NextResponse.json(
+    const responseToken = await signToken({
+      sub: String(updatedUser.id),
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+    });
+
+    const response = NextResponse.json(
       {
         message: "Perfil actualizado con éxito.",
         user: {
           ...updatedUser,
-          id: Number(updatedUser.id), // <-- Convertimos explícitamente el BigInt a Number
+          id: Number(updatedUser.id),
         },
       },
       { status: 200 }
     );
-
+    setSessionCookie(response, responseToken);
+    return response;
   } catch (error: any) {
     console.error("Error en handleUpdateMe:", error);
     return NextResponse.json(
@@ -193,11 +192,12 @@ return NextResponse.json(
 }
 
 
+
 export async function handleGoogleLoginRedirect(request: Request) {
   const url = new URL(request.url);
   const redirect = url.searchParams.get("redirect") ?? "/";
   const state = encodeURIComponent(redirect);
-  
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const redirectUri = `${appUrl}/api/auth/google/callback`;

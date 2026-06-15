@@ -14,4 +14,5 @@ export interface LostPetFilters {
 export interface LostPetsRepository {
   listLostPets(filters?: LostPetFilters): Promise<LostPet[]>;
   createLostPet(input: RegisterLostPetInput): Promise<LostPet>;
+  resolveLostPet(petId: number, userId: number): Promise<LostPet | null>;
 }
