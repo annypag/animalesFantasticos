@@ -48,6 +48,13 @@ export async function handleVisualSearch(request: Request): Promise<Response> {
     const speciesRaw = formData.get("species");
     const species = typeof speciesRaw === "string" ? speciesRaw : undefined;
 
+    const petNameRaw = formData.get("petName");
+    const petDescriptionRaw = formData.get("petDescription");
+    const petName = typeof petNameRaw === "string" ? petNameRaw : undefined;
+    const petDescription = typeof petDescriptionRaw === "string" ? petDescriptionRaw : undefined;
+
+    const textDescriptor = [species, petName, petDescription].filter(Boolean).join(", ") || undefined;
+
     const arrayBuffer = await file.arrayBuffer();
     const base64Data = Buffer.from(arrayBuffer).toString("base64");
 
@@ -55,6 +62,7 @@ export async function handleVisualSearch(request: Request): Promise<Response> {
       base64Data,
       mimeType: file.type,
       species,
+      textDescriptor,
     });
 
     return NextResponse.json(result, { status: 200 });

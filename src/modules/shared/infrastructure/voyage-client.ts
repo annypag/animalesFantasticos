@@ -50,12 +50,11 @@ export async function generateEmbedding(
   return data.data[0].embedding;
 }
 
-export async function generateImageEmbedding(imageUrl: string): Promise<number[]> {
+export async function generateImageEmbedding(imageUrl: string, textDescriptor?: string): Promise<number[]> {
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    return generateEmbedding(
-      [{ type: "image_url", image_url: imageUrl }],
-      "document",
-    );
+    const content: VoyageContentItem[] = [{ type: "image_url", image_url: imageUrl }];
+    if (textDescriptor) content.push({ type: "text", text: textDescriptor });
+    return generateEmbedding(content, "document");
   }
 
   // Path local relativo a /public — leer desde disco y convertir a base64
@@ -68,18 +67,19 @@ export async function generateImageEmbedding(imageUrl: string): Promise<number[]
   const mimeType =
     ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 
-  return generateEmbedding(
-    [{ type: "image_base64", image_base64: `data:${mimeType};base64,${base64}` }],
-    "document",
-  );
+  const content: VoyageContentItem[] = [{ type: "image_base64", image_base64: `data:${mimeType};base64,${base64}` }];
+  if (textDescriptor) content.push({ type: "text", text: textDescriptor });
+  return generateEmbedding(content, "document");
 }
 
 export async function generateBase64Embedding(
   base64Data: string,
   mimeType: string,
+  textDescriptor?: string,
 ): Promise<number[]> {
-  return generateEmbedding(
-    [{ type: "image_base64", image_base64: `data:${mimeType};base64,${base64Data}` }],
-    "query",
-  );
+  const content: VoyageContentItem[] = [
+    { type: "image_base64", image_base64: `data:${mimeType};base64,${base64Data}` },
+  ];
+  if (textDescriptor) content.push({ type: "text", text: textDescriptor });
+  return generateEmbedding(content, "query");
 }

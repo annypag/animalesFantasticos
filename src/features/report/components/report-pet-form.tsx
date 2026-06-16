@@ -8,19 +8,12 @@ import { motion } from "motion/react";
 import { uploadReportImage } from "@/features/report/lib/report-image-api";
 import { PET_NAME_UNKNOWN } from "@/features/report/lib/pet-name";
 import type {
-  PetBreedOption,
   ReportPetErrors,
   ReportPetFormState,
   ReportType,
 } from "../types/types";
 import { ReportLocationMap } from "./report-location-map";
-
-const BREED_OPTIONS: PetBreedOption[] = [
-  "Labrador",
-  "Mestizo",
-  "Caniche",
-  "Desconocido",
-];
+import { BreedAutocomplete } from "./breed-autocomplete";
 
 type ReportPetFormProps = {
   type: ReportType;
@@ -360,28 +353,12 @@ export function ReportPetForm({
 
                 <div className="space-y-1.5 text-sm sm:col-span-2">
                   <span className="font-semibold text-slate-700">{requiredLabel("Raza")}</span>
-                  <div className="relative">
-                    <select
-                      value={form.breed[0] ?? ""}
-                      onChange={(event) =>
-                        handleFieldChange(
-                          "breed",
-                          event.target.value ? [event.target.value as PetBreedOption] : [],
-                        )
-                      }
-                      className={`h-11 w-full appearance-none rounded-2xl border bg-white px-3 pr-10 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                        activeErrors.breed ? "border-red-400 focus:border-red-500" : "border-border focus:border-primary"
-                      }`}
-                    >
-                      <option value="">Seleccionar raza</option>
-                      {BREED_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  </div>
+                  <BreedAutocomplete
+                    value={form.breed[0] ?? ""}
+                    onChange={(val) => handleFieldChange("breed", val ? [val] : [])}
+                    species={form.species}
+                    hasError={!!activeErrors.breed}
+                  />
                   {activeErrors.breed && <p className="text-xs text-red-500 font-medium">{activeErrors.breed}</p>}
                 </div>
               </div>

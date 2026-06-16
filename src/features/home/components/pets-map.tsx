@@ -6,7 +6,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import type L from "leaflet";
 import { Pet } from "@/features/home/types";
 
-// Dynamic loading of Leaflet MapContainer, TileLayer, Marker, and Popup
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false },
@@ -21,6 +20,10 @@ const Marker = dynamic(
 );
 const Popup = dynamic(
   () => import("react-leaflet").then((mod) => mod.Popup),
+  { ssr: false },
+);
+const MarkerClusterGroup = dynamic(
+  () => import("react-leaflet-cluster").then((mod) => mod.default),
   { ssr: false },
 );
 
@@ -48,8 +51,6 @@ const MapEventsHandler = dynamic(
             popupOpenRef.current = false;
           },
           preclick: () => {
-            // preclick fires before Leaflet closes the popup via closePopupOnClick,
-            // so this is where we can still see the popup is open
             clickShouldSkipRef.current = popupOpenRef.current;
           },
           click: (event: L.LeafletMouseEvent) => {
@@ -71,7 +72,6 @@ const MapEventsHandler = dynamic(
           },
         });
 
-        // Initialize state on mount
         useEffect(() => {
           onZoomChange(map.getZoom());
           onBoundsChange(map);
@@ -91,39 +91,58 @@ interface PetsMapProps {
   onPetSelect: (pet: Pet) => void;
 }
 
+function pinSizeForZoom(roundedZoom: number): number {
+  if (roundedZoom <= 9) return 28;
+  if (roundedZoom === 10) return 36;
+  if (roundedZoom === 11) return 44;
+  if (roundedZoom === 12) return 52;
+  if (roundedZoom === 13) return 62;
+  if (roundedZoom === 14) return 70;
+  if (roundedZoom === 15) return 78;
+  if (roundedZoom === 16) return 86;
+  return 94;
+}
+
 export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMapProps) {
   const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
   const [zoom, setZoom] = useState(13);
   const [map, setMap] = useState<L.Map | null>(null);
 
   const roundedZoom = Math.round(zoom);
+  const pinSize = pinSizeForZoom(roundedZoom);
 
   const handleBoundsChange = useCallback((mapInstance: L.Map) => {
     setMap(mapInstance);
   }, []);
 
+  const createClusterIcon = useCallback(
+    (cluster: { getChildCount(): number }) => {
+      if (!leaflet) return leaflet;
+      const count = cluster.getChildCount();
+      const size = count < 10 ? 40 : count < 50 ? 50 : 60;
+      const fontSize = count < 10 ? 14 : count < 50 ? 16 : 18;
+      return leaflet.divIcon({
+        html: `<div class="cluster-pin" style="width:${size}px;height:${size}px;font-size:${fontSize}px">${count}</div>`,
+        className: "",
+        iconSize: leaflet.point(size, size),
+        iconAnchor: leaflet.point(size / 2, size / 2),
+      });
+    },
+    [leaflet],
+  );
+
   useEffect(() => {
     let active = true;
-
     import("leaflet").then((L) => {
-      if (!active) {
-        return;
-      }
-
+      if (!active) return;
       L.Icon.Default.mergeOptions({
-        iconRetinaUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
         iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
-
       setLeaflet(L);
     });
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   if (!leaflet) {
@@ -136,66 +155,9 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
     );
   }
 
-  // Calculate dynamic sizes based on zoom and distance to neighbors
-  const visiblePets = map
-    ? pets.filter((pet) => map.getBounds().contains(pet.coordinates))
-    : pets;
-
-  const petPositions = map
-    ? visiblePets.map((pet) => {
-      const pt = map.latLngToLayerPoint(pet.coordinates);
-      return {
-        id: pet.id,
-        x: pt.x,
-        y: pt.y,
-      };
-    })
-    : [];
-
-  const petSizes = new Map<string, number>();
-
-  pets.forEach((pet) => {
-    // 1. Calculate default size based on rounded zoom level (handles fractional zoom on pinch/scroll)
-    let baseSize = 48;
-    if (roundedZoom <= 9) baseSize = 20;
-    else if (roundedZoom === 10) baseSize = 24;
-    else if (roundedZoom === 11) baseSize = 32;
-    else if (roundedZoom === 12) baseSize = 40;
-    else if (roundedZoom === 13) baseSize = 48;
-    else if (roundedZoom === 14) baseSize = 56;
-    else if (roundedZoom === 15) baseSize = 64;
-    else if (roundedZoom === 16) baseSize = 72;
-    else baseSize = 80; // roundedZoom >= 17
-
-    // 2. Find minimum distance to any other visible pet on screen
-    const pos1 = petPositions.find((p) => p.id === pet.id);
-    let minDistance = Infinity;
-
-    if (pos1) {
-      petPositions.forEach((pos2) => {
-        if (pos2.id === pet.id) return;
-        const dx = pos1.x - pos2.x;
-        const dy = pos1.y - pos2.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < minDistance) {
-          minDistance = dist;
-        }
-      });
-    }
-
-    // 3. Collision avoidance:
-    // If they are extremely close (under 45px), keep them compact (max 44px)
-    // If they are moderately close (45px to 75px), limit to a medium size (max 56px)
-    // Otherwise, allow them to grow to their full base size
-    let pinSize = baseSize;
-    if (minDistance < 45) {
-      pinSize = Math.min(baseSize, 44);
-    } else if (minDistance < 75) {
-      pinSize = Math.min(baseSize, 56);
-    }
-
-    petSizes.set(pet.id, pinSize);
-  });
+  const borderWidth = pinSize <= 36 ? 2 : pinSize <= 52 ? 2.5 : 3;
+  const imageSize = pinSize - borderWidth * 2;
+  const pinTipSize = Math.max(6, Math.round(pinSize * 0.2));
 
   return (
     <div className="absolute inset-0 z-0">
@@ -216,6 +178,7 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
           <span className="text-xs font-medium text-slate-700">Mascota Encontrada</span>
         </div>
       </div>
+
       <MapContainer
         center={[-34.5875, -58.42]}
         zoom={13}
@@ -232,103 +195,91 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
           onZoomChange={setZoom}
           onBoundsChange={handleBoundsChange}
         />
-        {pets.map((pet) => {
-          const pinSize = petSizes.get(pet.id) || 42;
-          let borderWidth = 3;
-          if (pinSize <= 24) borderWidth = 1.5;
-          else if (pinSize <= 36) borderWidth = 2;
-          else if (pinSize <= 48) borderWidth = 2.5;
 
-          const imageSize = pinSize - borderWidth * 2;
-          const pinTipSize = Math.max(5, Math.round(pinSize * 0.22));
-
-          const customIcon = leaflet.divIcon({
-            className: "bg-transparent border-0",
-            html: `
-              <div class="custom-pet-marker ${pet.status}" style="width: ${pinSize}px; height: ${pinSize}px;">
-                <div class="custom-pet-marker-img-container" style="width: ${imageSize}px; height: ${imageSize}px; border-width: ${borderWidth}px !important;">
-                  <img src="${pet.image}" alt="${pet.name}" class="custom-pet-marker-img" />
+        <MarkerClusterGroup
+          chunkedLoading
+          iconCreateFunction={createClusterIcon}
+          showCoverageOnHover={false}
+          maxClusterRadius={60}
+        >
+          {pets.map((pet) => {
+            const customIcon = leaflet.divIcon({
+              className: "bg-transparent border-0",
+              html: `
+                <div class="custom-pet-marker ${pet.status}" style="width:${pinSize}px;height:${pinSize}px;">
+                  <div class="custom-pet-marker-img-container" style="width:${imageSize}px;height:${imageSize}px;border-width:${borderWidth}px !important;">
+                    <img src="${pet.image}" alt="${pet.name}" class="custom-pet-marker-img" />
+                  </div>
+                  <div class="custom-pet-marker-pin" style="bottom:-${Math.round(pinTipSize / 2)}px;width:${pinTipSize}px;height:${pinTipSize}px;"></div>
                 </div>
-                <div class="custom-pet-marker-pin" style="bottom: -${Math.round(pinTipSize / 2)}px; width: ${pinTipSize}px; height: ${pinTipSize}px;"></div>
-              </div>
-            `,
-            iconSize: [pinSize, pinSize],
-            iconAnchor: [pinSize / 2, pinSize],
-            popupAnchor: [0, -pinSize - 4],
-          });
+              `,
+              iconSize: [pinSize, pinSize],
+              iconAnchor: [pinSize / 2, pinSize],
+              popupAnchor: [0, -pinSize - 4],
+            });
 
-          return (
-            <Marker
-              key={pet.id}
-              position={pet.coordinates}
-              icon={customIcon}
-              eventHandlers={{
-                mouseover: (e) => {
-                  e.target.openPopup();
-                },
-                click: (e) => {
-                  (e.target as { openPopup(): void }).openPopup();
-                },
-              }}
-            >
-              <Popup>
-                <div className="min-w-[180px]">
-                  <Image
-                    src={pet.image}
-                    alt={pet.name}
-                    width={320}
-                    height={128}
-                    unoptimized
-                    className="mb-2 h-32 w-full rounded-lg object-cover object-top"
-                  />
-
-                  <div className="mb-3 flex flex-col gap-0.5">
-                    <div className="text-sm font-semibold leading-none text-foreground">
-                      {pet.name}
-                    </div>
-                    <div className="text-xs leading-none text-muted-foreground mb-1">
-                      {pet.species} • {pet.breed}
-                      {pet.sex && pet.sex !== "Desconocido" && (
-                        <span> • {pet.sex}</span>
+            return (
+              <Marker
+                key={pet.id}
+                position={pet.coordinates}
+                icon={customIcon}
+                eventHandlers={{
+                  mouseover: (e) => { e.target.openPopup(); },
+                  click: (e) => { (e.target as { openPopup(): void }).openPopup(); },
+                }}
+              >
+                <Popup>
+                  <div className="min-w-[180px]">
+                    <Image
+                      src={pet.image}
+                      alt={pet.name}
+                      width={320}
+                      height={128}
+                      unoptimized
+                      className="mb-2 h-32 w-full rounded-lg object-cover object-top"
+                    />
+                    <div className="mb-3 flex flex-col gap-0.5">
+                      <div className="text-sm font-semibold leading-none text-foreground">
+                        {pet.name}
+                      </div>
+                      <div className="text-xs leading-none text-muted-foreground mb-1">
+                        {pet.species} • {pet.breed}
+                        {pet.sex && pet.sex !== "Desconocido" && (
+                          <span> • {pet.sex}</span>
+                        )}
+                      </div>
+                      {pet.createdAt && (
+                        <div className="text-[10px] leading-none text-muted-foreground flex items-center">
+                          <span className="font-semibold text-foreground mr-1">Publicado:</span>
+                          {new Date(pet.createdAt).toLocaleString("es-AR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      )}
+                      {pet.lastSeen && (
+                        <div className="text-[10px] leading-none text-muted-foreground flex items-center">
+                          <span className="font-semibold text-foreground mr-1">Última vez visto:</span>
+                          {pet.lastSeen}
+                        </div>
                       )}
                     </div>
-
-                    {pet.createdAt && (
-                      <div className="text-[10px] leading-none text-muted-foreground flex items-center">
-                        <span className="font-semibold text-foreground mr-1">
-                          Publicado:
-                        </span>
-                        {new Date(pet.createdAt).toLocaleString("es-AR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    )}
-                    {pet.lastSeen && (
-                      <div className="text-[10px] leading-none text-muted-foreground flex items-center">
-                        <span className="font-semibold text-foreground mr-1">
-                          Última vez visto:
-                        </span>
-                        {pet.lastSeen}
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => { map?.closePopup(); onPetSelect(pet); }}
+                      className="w-full rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 mt-1 cursor-pointer"
+                    >
+                      Ver detalles
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => { map?.closePopup(); onPetSelect(pet); }}
-                    className="w-full rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 mt-1 cursor-pointer"
-                  >
-                    Ver detalles
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );

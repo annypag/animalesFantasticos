@@ -9,6 +9,7 @@ export interface SearchByImageInput {
   limit?: number;
   threshold?: number;
   species?: string;
+  textDescriptor?: string;
 }
 
 export interface SearchByImageResult {
@@ -26,7 +27,7 @@ export async function searchByImage(
   const threshold = input.threshold ?? Number(process.env.MATCHING_SIMILARITY_THRESHOLD ?? "0.0");
   const limit = input.limit ?? 5;
 
-  const queryEmbedding = await generateBase64Embedding(input.base64Data, input.mimeType);
+  const queryEmbedding = await generateBase64Embedding(input.base64Data, input.mimeType, input.textDescriptor);
   const allMatches = await vectorRepo.findSimilarFoundPets(queryEmbedding, limit, input.species);
 
   const filtered = threshold > 0

@@ -1,96 +1,55 @@
-/**
- * Backfill script: genera embeddings visuales para todas las mascotas encontradas
- * que aún no tienen embedding almacenado.
- *
- * Uso: npx tsx prisma/backfill-embeddings.ts
- */
-
 import { PrismaClient } from "../src/generated/prisma";
-import { generateImageEmbedding } from "../src/modules/shared/infrastructure/voyage-client";
+import { generateImageEmbedding, generateBase64Embedding } from "../src/modules/shared/infrastructure/voyage-client";
+import { removeImageBackground } from "../src/modules/shared/infrastructure/background-removal";
 import { VectorSearchRepository } from "../src/modules/matching/infrastructure/vector-search-repository";
 
 const prisma = new PrismaClient();
 const vectorRepo = new VectorSearchRepository();
 
-const BATCH_SIZE = 5;
+const DELAY_MS = 21000; // 3 RPM free tier → 21s entre llamadas
 
-async function ensureHnswIndex(): Promise<void> {
-  await prisma.$executeRaw`
-    CREATE INDEX IF NOT EXISTS found_pets_embedding_hnsw_idx
-    ON found_pets USING hnsw (embedding vector_cosine_ops)
-    WITH (m = 16, ef_construction = 64)
-  `;
-  console.log("Índice HNSW verificado/creado.");
-}
-
-async function main(): Promise<void> {
+async function main() {
   if (!process.env.VOYAGE_API_KEY) {
-    console.error(
-      "Error: VOYAGE_API_KEY no está configurado.\n" +
-        "Setear la variable de entorno antes de correr este script:\n" +
-        "  $env:VOYAGE_API_KEY='tu-api-key'  # PowerShell\n" +
-        "  export VOYAGE_API_KEY='tu-api-key' # bash",
-    );
+    console.error("VOYAGE_API_KEY no configurado.");
     process.exit(1);
   }
 
-  // Verificar que pgvector esté instalado
-  try {
-    await prisma.$queryRaw`SELECT 1 FROM found_pets WHERE embedding IS NULL LIMIT 1`;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (message.includes("vector")) {
-      console.error(
-        "Error: La extensión pgvector no está instalada en la base de datos.\n" +
-          "Ejecutar antes:\n" +
-          "  docker exec animales-fantasticos-db psql -U postgres -d animales_fantasticos -c \"CREATE EXTENSION IF NOT EXISTS vector;\"\n" +
-          "  npx prisma db push",
-      );
-      process.exit(1);
-    }
-    throw err;
-  }
+  const pets = await prisma.foundPet.findMany({
+    select: { id: true, name: true, imageUrl: true, species: true, breed: true, description: true },
+  });
 
-  let totalProcessed = 0;
-  let totalFailed = 0;
-  const failedIds = new Set<number>();
+  console.log(`Regenerando embeddings para ${pets.length} mascotas encontradas...`);
 
-  console.log(`Iniciando backfill (lotes de ${BATCH_SIZE})...`);
+  let success = 0;
+  let failed = 0;
 
-  while (true) {
-    const batch = (await vectorRepo.getFoundPetsWithoutEmbedding(BATCH_SIZE + failedIds.size))
-      .filter((p) => !failedIds.has(p.id))
-      .slice(0, BATCH_SIZE);
+  for (let i = 0; i < pets.length; i++) {
+    const pet = pets[i];
+    const textDescriptor = [pet.species, pet.breed, pet.description].filter(Boolean).join(", ");
 
-    if (batch.length === 0) break;
+    if (i > 0) await new Promise((r) => setTimeout(r, DELAY_MS));
 
-    for (const pet of batch) {
-      try {
-        console.log(`  Generando embedding para pet ${pet.id} (${pet.imageUrl})...`);
-        const embedding = await generateImageEmbedding(pet.imageUrl);
-        await vectorRepo.saveFoundPetEmbedding(pet.id, embedding);
-        totalProcessed++;
-        console.log(`  ✓ pet ${pet.id}`);
-      } catch (err) {
-        totalFailed++;
-        failedIds.add(pet.id);
-        console.error(`  ✗ pet ${pet.id} — error:`, err instanceof Error ? err.message : err);
-      }
+    try {
+      console.log(`  [${i + 1}/${pets.length}] ${pet.name} — "${textDescriptor.slice(0, 60)}..."`);
+
+      const bgBase64 = await removeImageBackground(pet.imageUrl);
+
+      const embedding = bgBase64
+        ? await generateBase64Embedding(bgBase64, "image/png", textDescriptor)
+        : await generateImageEmbedding(pet.imageUrl, textDescriptor);
+
+      await vectorRepo.saveFoundPetEmbedding(Number(pet.id), embedding);
+      success++;
+      console.log(`    ✓ ${bgBase64 ? "con fondo removido" : "imagen original"}`);
+    } catch (err) {
+      failed++;
+      console.warn(`    ✗ Error: ${(err as Error).message}`);
     }
   }
 
-  console.log(`\nBackfill completado: ${totalProcessed} procesados, ${totalFailed} fallidos.`);
-
-  if (totalProcessed > 0) {
-    console.log("Creando índice HNSW...");
-    await ensureHnswIndex();
-  }
-
-  await prisma.$disconnect();
+  console.log(`\nBackfill completado: ${success} OK, ${failed} fallidos.`);
 }
 
-main().catch((err) => {
-  console.error("Error fatal en backfill:", err);
-  prisma.$disconnect();
-  process.exit(1);
-});
+main()
+  .catch((err) => { console.error("Backfill failed:", err); process.exitCode = 1; })
+  .finally(() => prisma.$disconnect());

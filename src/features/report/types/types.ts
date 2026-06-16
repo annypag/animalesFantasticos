@@ -3,7 +3,7 @@ export type ReportType = "lost" | "found";
 export type PetSpecies = "Perro" | "Gato" | "Otro";
 export type PetSize = "Pequeno" | "Mediano" | "Grande";
 export type PetSex = "Macho" | "Hembra" | "Desconocido";
-export type PetBreedOption = "Labrador" | "Mestizo" | "Caniche" | "Desconocido";
+export type PetBreedOption = string;
 export type DdMmYyyyDateString = string;
 
 /** tag = chapita con nombre; unknown = no se conoce el nombre */

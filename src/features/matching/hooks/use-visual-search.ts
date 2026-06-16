@@ -7,6 +7,7 @@ export type WidgetState =
   | "closed"
   | "species-select"
   | "idle"
+  | "removing-bg"
   | "loading"
   | "results"
   | "no-results"
@@ -15,6 +16,8 @@ export type WidgetState =
 interface UseVisualSearchReturn {
   widgetState: WidgetState;
   species: string | null;
+  petName: string;
+  petDescription: string;
   selectedFile: File | null;
   previewUrl: string | null;
   matches: VectorMatch[];
@@ -22,6 +25,8 @@ interface UseVisualSearchReturn {
   handleOpen: () => void;
   handleClose: () => void;
   handleSpeciesSelect: (s: string) => void;
+  handleNameChange: (v: string) => void;
+  handleDescriptionChange: (v: string) => void;
   handleImageSelect: (file: File) => void;
   handleSearch: () => Promise<void>;
   reset: () => void;
@@ -30,6 +35,8 @@ interface UseVisualSearchReturn {
 export function useVisualSearch(): UseVisualSearchReturn {
   const [widgetState, setWidgetState] = useState<WidgetState>("closed");
   const [species, setSpecies] = useState<string | null>(null);
+  const [petName, setPetName] = useState("");
+  const [petDescription, setPetDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [matches, setMatches] = useState<VectorMatch[]>([]);
@@ -43,6 +50,8 @@ export function useVisualSearch(): UseVisualSearchReturn {
     setWidgetState("closed");
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSpecies(null);
+    setPetName("");
+    setPetDescription("");
     setSelectedFile(null);
     setPreviewUrl(null);
     setMatches([]);
@@ -53,6 +62,9 @@ export function useVisualSearch(): UseVisualSearchReturn {
     setSpecies(s);
     setWidgetState("idle");
   }, []);
+
+  const handleNameChange = useCallback((v: string) => setPetName(v), []);
+  const handleDescriptionChange = useCallback((v: string) => setPetDescription(v), []);
 
   const handleImageSelect = useCallback(
     (file: File) => {
@@ -69,13 +81,26 @@ export function useVisualSearch(): UseVisualSearchReturn {
   const handleSearch = useCallback(async () => {
     if (!selectedFile) return;
 
-    setWidgetState("loading");
+    setWidgetState("removing-bg");
     setErrorMessage(null);
+
+    let fileToSend: File = selectedFile;
+    try {
+      const { removeBackground } = await import("@imgly/background-removal");
+      const blob = await removeBackground(selectedFile);
+      fileToSend = new File([blob], "image.png", { type: "image/png" });
+    } catch (err) {
+      console.warn("[BG removal] Falló, se usa imagen original:", (err as Error).message);
+    }
+
+    setWidgetState("loading");
 
     try {
       const formData = new FormData();
-      formData.append("image", selectedFile);
+      formData.append("image", fileToSend);
       if (species) formData.append("species", species);
+      if (petName.trim()) formData.append("petName", petName.trim());
+      if (petDescription.trim()) formData.append("petDescription", petDescription.trim());
 
       const response = await fetch("/api/matches/search", {
         method: "POST",
@@ -110,12 +135,16 @@ export function useVisualSearch(): UseVisualSearchReturn {
     setMatches([]);
     setErrorMessage(null);
     setSpecies(null);
+    setPetName("");
+    setPetDescription("");
     setWidgetState("species-select");
   }, [previewUrl]);
 
   return {
     widgetState,
     species,
+    petName,
+    petDescription,
     selectedFile,
     previewUrl,
     matches,
@@ -123,6 +152,8 @@ export function useVisualSearch(): UseVisualSearchReturn {
     handleOpen,
     handleClose,
     handleSpeciesSelect,
+    handleNameChange,
+    handleDescriptionChange,
     handleImageSelect,
     handleSearch,
     reset,

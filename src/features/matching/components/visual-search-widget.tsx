@@ -182,19 +182,23 @@ export function VisualSearchWidget() {
   const {
     widgetState,
     species,
+    petName,
+    petDescription,
     previewUrl,
     matches,
     errorMessage,
     handleOpen,
     handleClose,
     handleSpeciesSelect,
+    handleNameChange,
+    handleDescriptionChange,
     handleImageSelect,
     handleSearch,
     reset,
   } = useVisualSearch();
 
   const isOpen = widgetState !== "closed";
-  const isLoading = widgetState === "loading";
+  const isLoading = widgetState === "loading" || widgetState === "removing-bg";
   const hasImage = previewUrl !== null;
 
   return (
@@ -290,8 +294,8 @@ export function VisualSearchWidget() {
               </>
             )}
 
-            {/* PASO 2: upload de foto */}
-            {(widgetState === "idle" || widgetState === "loading") && (
+            {/* PASO 2: upload + datos opcionales */}
+            {(widgetState === "idle" || widgetState === "loading" || widgetState === "removing-bg") && (
               <>
                 <div className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
                   {species && species !== "Otro"
@@ -299,6 +303,24 @@ export function VisualSearchWidget() {
                     : "Subí una foto de tu mascota y busco posibles coincidencias entre las reportadas como encontradas 🐾"}
                 </div>
                 <UploadZone previewUrl={previewUrl} onFileSelect={handleImageSelect} />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nombre (opcional)"
+                    value={petName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    disabled={isLoading}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  />
+                  <textarea
+                    placeholder="Descripción breve: color, tamaño, marcas distintivas... (opcional)"
+                    value={petDescription}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
+                    disabled={isLoading}
+                    rows={2}
+                    className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  />
+                </div>
               </>
             )}
 
@@ -331,7 +353,9 @@ export function VisualSearchWidget() {
             {isLoading && (
               <div className="flex flex-col items-center gap-3 py-4">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                <p className="text-sm text-muted-foreground">Analizando imagen...</p>
+                <p className="text-sm text-muted-foreground">
+                  {widgetState === "removing-bg" ? "Procesando imagen..." : "Analizando imagen..."}
+                </p>
               </div>
             )}
 
