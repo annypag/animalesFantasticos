@@ -3,6 +3,17 @@
 import { useState, useCallback } from "react";
 import type { VectorMatch } from "@/modules/matching/infrastructure/vector-search-repository";
 
+async function resizeImage(file: File, maxPx: number): Promise<Blob> {
+  const img = await createImageBitmap(file);
+  const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const canvas = new OffscreenCanvas(w, h);
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.convertToBlob({ type: "image/jpeg", quality: 0.9 });
+}
+
 export type WidgetState =
   | "closed"
   | "species-select"
@@ -87,7 +98,8 @@ export function useVisualSearch(): UseVisualSearchReturn {
     let fileToSend: File = selectedFile;
     try {
       const { removeBackground } = await import("@imgly/background-removal");
-      const blob = await removeBackground(selectedFile);
+      const resized = await resizeImage(selectedFile, 512);
+      const blob = await removeBackground(resized, { model: "isnet_quint8" });
       fileToSend = new File([blob], "image.png", { type: "image/png" });
     } catch (err) {
       console.warn("[BG removal] Falló, se usa imagen original:", (err as Error).message);
