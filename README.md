@@ -90,6 +90,10 @@ Crea 3 usuarios con mascotas encontradas y perdidas de muestra. Contraseña de t
 npm run db:seed
 ```
 
+> **Tarda ~4-5 minutos.** Por cada mascota encontrada, el seed le remueve el fondo a la foto y genera un embedding real contra Voyage AI (free tier = 3 requests/minuto, por eso espera ~21s entre cada una). No lo interrumpas. Si no configuraste `VOYAGE_API_KEY`, el seed igual carga los datos pero sin embeddings (la búsqueda visual no va a encontrar esas mascotas hasta correr `npm run db:backfill` con la key configurada).
+>
+> La primera vez que corre, descarga un modelo ONNX (~100MB) para la remoción de fondo — es normal que tarde más en esa primera corrida.
+
 Usuarios disponibles tras el seed:
 - `sofia@animalesfantasticos.local`
 - `martin@animalesfantasticos.local`
@@ -102,6 +106,8 @@ npm run dev
 ```
 
 Abrir http://localhost:3000
+
+> La primera vez que uses el botón "Buscar mi mascota" (búsqueda visual), el navegador descarga su propio modelo ONNX (~100MB, paquete `@imgly/background-removal`) para remover el fondo de la foto antes de buscarla. Queda cacheado en el browser para las próximas veces.
 
 ### 7) Apagar servicios cuando termines
 
@@ -479,6 +485,8 @@ Esta seccion es para cualquier agente (Codex/Claude/otros) que vaya a implementa
 - `npm run db:up`: levantar postgres + pgAdmin con Docker.
 - `npm run db:down`: bajar contenedores.
 - `npm run db:logs`: ver logs de contenedores.
+- `npm run db:seed`: carga usuarios + mascotas de prueba y genera sus embeddings (requiere `VOYAGE_API_KEY`, tarda varios minutos).
+- `npm run db:backfill`: regenera embeddings para mascotas encontradas que ya existen en la DB (útil si cambiás el formato del embedding o agregaste `VOYAGE_API_KEY` después del seed).
 
 ## Stack
 
