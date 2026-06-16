@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type L from "leaflet";
 import { Pet } from "@/features/home/types";
 
@@ -37,8 +37,26 @@ const MapEventsHandler = dynamic(
         onZoomChange: (zoom: number) => void;
         onBoundsChange: (map: L.Map) => void;
       }) {
+        const popupOpenRef = useRef(false);
+        const clickShouldSkipRef = useRef(false);
+
         const map = mod.useMapEvents({
+          popupopen: () => {
+            popupOpenRef.current = true;
+          },
+          popupclose: () => {
+            popupOpenRef.current = false;
+          },
+          preclick: () => {
+            // preclick fires before Leaflet closes the popup via closePopupOnClick,
+            // so this is where we can still see the popup is open
+            clickShouldSkipRef.current = popupOpenRef.current;
+          },
           click: (event: L.LeafletMouseEvent) => {
+            if (clickShouldSkipRef.current) {
+              clickShouldSkipRef.current = false;
+              return;
+            }
             onMapClick([event.latlng.lat, event.latlng.lng]);
           },
           zoom: () => {
@@ -77,13 +95,11 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
   const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
   const [zoom, setZoom] = useState(13);
   const [map, setMap] = useState<L.Map | null>(null);
-  const [, setMapUpdateKey] = useState(0);
 
   const roundedZoom = Math.round(zoom);
 
   const handleBoundsChange = useCallback((mapInstance: L.Map) => {
     setMap(mapInstance);
-    setMapUpdateKey((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
@@ -250,11 +266,8 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
                 mouseover: (e) => {
                   e.target.openPopup();
                 },
-                mouseout: (e) => {
-                  e.target.closePopup();
-                },
-                click: () => {
-                  onPetSelect(pet);
+                click: (e) => {
+                  (e.target as { openPopup(): void }).openPopup();
                 },
               }}
             >
@@ -306,7 +319,7 @@ export function PetsMap({ pets, onMapClick, onMarkerClick, onPetSelect }: PetsMa
 
                   <button
                     type="button"
-                    onClick={() => onPetSelect(pet)}
+                    onClick={() => { map?.closePopup(); onPetSelect(pet); }}
                     className="w-full rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 mt-1 cursor-pointer"
                   >
                     Ver detalles

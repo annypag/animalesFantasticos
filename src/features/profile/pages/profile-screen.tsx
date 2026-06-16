@@ -187,29 +187,40 @@ export function ProfileScreen() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {myLostPets.map((pet) => (
-                  <div key={pet.id} className="flex gap-3 rounded-xl border border-border bg-muted/20 p-3">
-                    <img
-                      src={pet.imageUrl}
-                      alt={pet.name}
-                      className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold text-foreground">{pet.name}</p>
-                        {pet.resolvedAt ? (
-                          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Resuelto</span>
-                        ) : (
-                          <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Buscando</span>
-                        )}
+                {myLostPets.map((pet) => {
+                  const cardContent = (
+                    <>
+                      <img
+                        src={pet.imageUrl}
+                        alt={pet.name}
+                        className="h-16 w-16 shrink-0 rounded-lg object-cover object-top"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-semibold text-foreground">{pet.name}</p>
+                          {pet.resolvedAt ? (
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Resuelto</span>
+                          ) : (
+                            <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Buscando</span>
+                          )}
+                        </div>
+                        <p className="truncate text-xs text-muted-foreground">{pet.breed} · {pet.locationText}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(pet.lastSeen).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                        </p>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">{pet.breed} · {pet.locationText}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(pet.lastSeen).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                      </p>
+                    </>
+                  );
+                  return pet.resolvedAt ? (
+                    <div key={pet.id} className="flex gap-3 rounded-xl border border-border bg-muted/20 p-3 opacity-60">
+                      {cardContent}
                     </div>
-                  </div>
-                ))}
+                  ) : (
+                    <Link key={pet.id} href={`/mapa?openPet=db-lost-${pet.id}`} className="flex gap-3 rounded-xl border border-border bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                      {cardContent}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -250,29 +261,40 @@ export function ProfileScreen() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {myFoundPets.map((pet) => (
-                  <div key={pet.id} className="flex gap-3 rounded-xl border border-border bg-muted/20 p-3">
-                    <img
-                      src={pet.imageUrl}
-                      alt={pet.name}
-                      className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold text-foreground">{pet.name}</p>
-                        {pet.resolvedAt ? (
-                          <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Resuelto</span>
-                        ) : (
-                          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Activo</span>
-                        )}
+                {myFoundPets.map((pet) => {
+                  const cardContent = (
+                    <>
+                      <img
+                        src={pet.imageUrl}
+                        alt={pet.name}
+                        className="h-16 w-16 shrink-0 rounded-lg object-cover object-top"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-semibold text-foreground">{pet.name}</p>
+                          {pet.resolvedAt ? (
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Resuelto</span>
+                          ) : (
+                            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Activo</span>
+                          )}
+                        </div>
+                        <p className="truncate text-xs text-muted-foreground">{pet.breed} · {pet.neighborhood}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(pet.foundAt).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                        </p>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">{pet.breed} · {pet.neighborhood}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(pet.foundAt).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                      </p>
+                    </>
+                  );
+                  return pet.resolvedAt ? (
+                    <div key={pet.id} className="flex gap-3 rounded-xl border border-border bg-muted/20 p-3 opacity-60">
+                      {cardContent}
                     </div>
-                  </div>
-                ))}
+                  ) : (
+                    <Link key={pet.id} href={`/mapa?openPet=db-${pet.id}`} className="flex gap-3 rounded-xl border border-border bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                      {cardContent}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
