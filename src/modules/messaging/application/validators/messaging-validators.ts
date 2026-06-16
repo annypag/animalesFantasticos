@@ -31,6 +31,7 @@ function parsePositiveInt(value: unknown): number | null {
 
 export function validateGetOrCreateConversationPayload(
   body: unknown,
+  participantUserId: number,
 ): GetOrCreateConversationInput {
   const data = body as { petKind?: unknown; petId?: unknown } | null;
   const petKind = parsePetKind(data?.petKind);
@@ -40,14 +41,22 @@ export function validateGetOrCreateConversationPayload(
     throw new ValidationError("petKind y petId son obligatorios.");
   }
 
-  return { petKind, petId };
+  return { petKind, petId, participantUserId };
 }
 
 export function validateSendMessagePayload(
   body: unknown,
   conversationId: number,
 ): SendMessageInput {
-  const data = body as { body?: unknown; imageUrl?: unknown } | null;
+  const data = body as {
+    senderName?: unknown;
+    body?: unknown;
+    imageUrl?: unknown;
+  } | null;
+  const senderName = asTrimmedString(data?.senderName) || "Usuario";
+  if (senderName.length > 80) {
+    throw new ValidationError("El nombre no puede superar 80 caracteres.");
+  }
   const textBody = asTrimmedString(data?.body);
   const imageUrl = asTrimmedString(data?.imageUrl);
 
@@ -61,9 +70,18 @@ export function validateSendMessagePayload(
 
   return {
     conversationId,
+    senderUserId: 0,
+    senderName,
     body: textBody || null,
     imageUrl: imageUrl || null,
   };
+}
+
+export function withSenderUserId(
+  input: SendMessageInput,
+  senderUserId: number,
+): SendMessageInput {
+  return { ...input, senderUserId };
 }
 
 export function validateConversationIdParam(value: string): number {

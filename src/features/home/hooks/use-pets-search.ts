@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { mockPets } from "@/features/home/data/mock-pets";
 import { mapApiLostPetToUiPet, mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
 import type { ApiFoundPet, ApiLostPet, FiltersState, Pet } from "@/features/home/types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -144,17 +143,19 @@ export function usePetsSearch() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const searchParamsString = searchParams.toString();
+
   const initialFilters = useMemo(() => {
-    return getFiltersFromSearchParams(new URLSearchParams(searchParams.toString()));
-  }, [searchParams]);
+    return getFiltersFromSearchParams(new URLSearchParams(searchParamsString));
+  }, [searchParamsString]);
 
   const [loadingDbPets, setLoadingDbPets] = useState(true);
   const [dbPets, setDbPets] = useState<Pet[]>([]);
   const [filters, setFilters] = useState<FiltersState>(initialFilters);
 
   useEffect(() => {
-    setFilters(initialFilters);
-  }, [initialFilters]);
+    setFilters(getFiltersFromSearchParams(new URLSearchParams(searchParamsString)));
+  }, [searchParamsString]);
 
   const fetchPets = useCallback(async () => {
     const [foundResult, lostResult] = await Promise.allSettled([
@@ -244,7 +245,7 @@ export function usePetsSearch() {
 
   const syncFiltersInUrl = useCallback(
     (nextFilters: FiltersState) => {
-      const currentParams = new URLSearchParams(searchParams.toString());
+      const currentParams = new URLSearchParams(searchParamsString);
 
       FILTER_KEYS.forEach((key) => {
         const value = nextFilters[key];
@@ -263,11 +264,11 @@ export function usePetsSearch() {
 
       router.replace(nextUrl, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParamsString],
   );
 
   const pets = useMemo(() => {
-    return [...dbPets, ...mockPets];
+    return dbPets;
   }, [dbPets]);
 
   const filteredPets = useMemo(() => {
@@ -293,7 +294,10 @@ export function usePetsSearch() {
       const matchesBreed =
         filters.breed === "all" || pet.breed === filters.breed;
 
+      const isNotResolved = !pet.resolvedAt;
+
       return (
+        isNotResolved &&
         matchesStatus &&
         matchesSpecies &&
         matchesSize &&

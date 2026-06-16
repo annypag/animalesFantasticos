@@ -1,4 +1,5 @@
 export {
+  handleGetConversations,
   handleGetMessages,
   handlePostChatImageUpload,
   handlePostConversation,

@@ -9,9 +9,12 @@ export interface FoundPetFilters {
   maxLat?: number;
   minLng?: number;
   maxLng?: number;
+  userId?: number;
+  includeResolved?: boolean;
 }
 
 export interface FoundPetsRepository {
   listFoundPets(filters?: FoundPetFilters): Promise<FoundPet[]>;
   createFoundPet(input: RegisterFoundPetInput): Promise<FoundPet>;
+  resolveFoundPet(petId: number, userId: number): Promise<FoundPet | null>;
 }

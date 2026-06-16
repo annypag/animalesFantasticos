@@ -5,6 +5,11 @@ export type PetRef = {
   petId: number;
 };
 
+/** Solo reportes persistidos en PostgreSQL (ids db-* / db-lost-*). */
+export function isSavedPetReport(uiPetId: string): boolean {
+  return uiPetId.startsWith("db-") || uiPetId.startsWith("db-lost-");
+}
+
 export function parsePetRefFromUiId(uiPetId: string): PetRef | null {
   if (uiPetId.startsWith("db-lost-")) {
     const petId = Number(uiPetId.replace("db-lost-", ""));

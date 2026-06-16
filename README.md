@@ -6,7 +6,8 @@ Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, b
 - Boton Reportar Perdida para abrir el mismo formulario.
 - Guardar mascota + persona responsable en base de datos.
 - Ver lo guardado en la lista lateral y como pin en el mapa.
-- Chat básico con envío de imágenes en reportes de DB (base para extender mensajería; ver `src/features/messaging/README.md`).
+- Chat con envío de imágenes en reportes de DB, con polling, notificaciones y posibilidad de marcar el caso como resuelto (ver `src/features/messaging/README.md`).
+- **Búsqueda visual por imagen**: subís una foto de tu mascota y la IA encuentra coincidencias entre los reportes de mascotas encontradas usando embeddings multimodales (Voyage AI).
 
 ## Diagrama MVP
 
@@ -16,7 +17,8 @@ Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, b
 
 - Node.js 20+ (recomendado 22 LTS).
 - npm 10+.
-- Docker Desktop (para PostgreSQL y pgAdmin local).
+- Docker Desktop (para PostgreSQL con pgvector y pgAdmin local).
+- Clave de API de Voyage AI (`VOYAGE_API_KEY`) para la búsqueda visual por imagen — pedila al equipo.
 
 ## Instalacion desde cero
 
@@ -50,7 +52,18 @@ Valores por defecto (ya vienen listos para Docker local):
 DATABASE_URL=postgres://postgres:postgres@localhost:5433/animales_fantasticos
 ```
 
+Agregar también la clave de Voyage AI para el comparador de imágenes:
+
+```bash
+VOYAGE_API_KEY=<pedila al equipo>
+```
+
 ### 3) Levantar base de datos local
+
+> **Importante:** el proyecto usa `pgvector/pgvector:pg17` en lugar de `postgres:17-alpine` para soportar búsqueda vectorial. Si tenías un contenedor previo con la imagen vieja, tiralo primero:
+> ```bash
+> npm run db:down
+> ```
 
 ```bash
 npm run db:up
@@ -62,14 +75,27 @@ Opcional para logs:
 npm run db:logs
 ```
 
-### 4) Generar cliente Prisma y sincronizar esquema
+### 4) Sincronizar esquema y regenerar cliente Prisma
 
 ```bash
-npx prisma generate
 npx prisma db push
+npx prisma generate
 ```
 
-### 5) Levantar la app
+### 5) Cargar datos de prueba (opcional pero recomendado)
+
+Crea 3 usuarios con mascotas encontradas y perdidas de muestra. Contraseña de todos: `seed1234`.
+
+```bash
+npm run db:seed
+```
+
+Usuarios disponibles tras el seed:
+- `sofia@animalesfantasticos.local`
+- `martin@animalesfantasticos.local`
+- `lucia@animalesfantasticos.local`
+
+### 6) Levantar la app
 
 ```bash
 npm run dev
@@ -77,7 +103,7 @@ npm run dev
 
 Abrir http://localhost:3000
 
-### 6) Apagar servicios cuando termines
+### 7) Apagar servicios cuando termines
 
 ```bash
 npm run db:down

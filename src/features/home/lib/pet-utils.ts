@@ -21,8 +21,10 @@ export function mapApiPetToUiPet(apiPet: ApiFoundPet): Pet {
     neighborhood: apiPet.neighborhood,
     coordinates: [apiPet.latitude, apiPet.longitude],
     description: apiPet.description,
+    ownerId: apiPet.owner.id,
     ownerName: apiPet.owner.fullName,
-    ownerPhone: apiPet.owner.phone,
+    ownerPhone: apiPet.owner.phone ?? undefined,
+    resolvedAt: apiPet.resolvedAt ?? null,
   };
 }
 
@@ -41,8 +43,10 @@ export function mapApiLostPetToUiPet(apiPet: ApiLostPet): Pet {
     location: apiPet.locationText,
     coordinates: [apiPet.latitude, apiPet.longitude],
     description: apiPet.description,
+    ownerId: apiPet.owner.id,
     ownerName: apiPet.owner.fullName,
-    ownerPhone: apiPet.owner.phone,
+    ownerPhone: apiPet.owner.phone ?? undefined,
+    resolvedAt: apiPet.resolvedAt ?? null,
   };
 }
 

@@ -7,6 +7,8 @@ import { signToken } from "@/lib/auth/jwt";
 import { setSessionCookie, clearSessionCookie, getSessionToken } from "@/lib/auth/session";
 import { verifyToken } from "@/lib/auth/jwt";
 import { authenticateGoogleUser } from "@/modules/auth/application/use-cases/google-auth";
+import { prisma } from "@/lib/prisma";
+
 
 const repository = new PrismaAuthRepository();
 
@@ -84,33 +86,119 @@ export function handlePostLogout() {
 }
 
 export async function handleGetMe(request: Request) {
-  const token = getSessionToken(request);
-  if (!token) {
-    return NextResponse.json({ message: "No autenticado." }, { status: 401 });
-  }
+  try {
+    // 1. Obtenemos el token del request
+    const token = getSessionToken(request);
+    if (!token) {
+      return NextResponse.json({ message: "No autenticado." }, { status: 401 });
+    }
 
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
-  }
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
+    }
 
-  return NextResponse.json(
-    {
-      user: {
-        id: Number(payload.sub),
-        email: payload.email,
-        fullName: payload.fullName,
+    const user = await prisma.user.findUnique({
+      where: { id: BigInt(payload.sub) },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        createdAt: true,
       },
-    },
-    { status: 200 },
-  );
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: "Usuario no encontrado." }, { status: 404 });
+    }
+
+    return NextResponse.json(
+      {
+        user: {
+          ...user,
+          id: Number(user.id),
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error en handleGetMe:", error);
+    return NextResponse.json(
+      { message: "Error interno del servidor al obtener el perfil." },
+      { status: 500 }
+    );
+  }
 }
+
+export async function handleUpdateMe(request: Request) {
+  try {
+    const token = getSessionToken(request);
+    if (!token) {
+      return NextResponse.json({ message: "No autenticado." }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ message: "Sesión inválida o expirada." }, { status: 401 });
+    }
+
+    const body = (await request.json()) as { fullName?: unknown; phone?: unknown };
+    const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
+    const phone = typeof body.phone === "string" ? body.phone.trim() : null;
+
+    if (!fullName) {
+      return NextResponse.json({ message: "El nombre es requerido." }, { status: 400 });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: BigInt(payload.sub) },
+      data: {
+        fullName,
+        phone,
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+      },
+    });
+
+    const responseToken = await signToken({
+      sub: String(updatedUser.id),
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+    });
+
+    const response = NextResponse.json(
+      {
+        message: "Perfil actualizado con éxito.",
+        user: {
+          ...updatedUser,
+          id: Number(updatedUser.id),
+        },
+      },
+      { status: 200 }
+    );
+    setSessionCookie(response, responseToken);
+    return response;
+  } catch (error: any) {
+    console.error("Error en handleUpdateMe:", error);
+    return NextResponse.json(
+      { message: "Error interno del servidor al actualizar el perfil." },
+      { status: 500 }
+    );
+  }
+}
+
+
 
 export async function handleGoogleLoginRedirect(request: Request) {
   const url = new URL(request.url);
   const redirect = url.searchParams.get("redirect") ?? "/";
   const state = encodeURIComponent(redirect);
-  
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const redirectUri = `${appUrl}/api/auth/google/callback`;

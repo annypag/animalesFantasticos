@@ -16,6 +16,7 @@ interface AuthContextValue {
   login(email: string, password: string, redirectTo?: string): Promise<void>;
   register(fullName: string, email: string, password: string, phone?: string): Promise<void>;
   logout(): Promise<void>;
+  updateUser(fullName: string, phone?: string): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -72,8 +73,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/");
   }, [router]);
 
+  const updateUser = useCallback(async (fullName: string, phone?: string) => {
+    const res = await fetch("/api/auth/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName, phone }),
+    });
+
+    const data = (await res.json()) as { user?: AuthUser; message?: string };
+    
+    if (!res.ok) {
+      throw new Error(data.message ?? "Error al actualizar el perfil.");
+    }
+
+    // Hidratar el estado global de inmediato
+    setUser(data.user ?? null);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
