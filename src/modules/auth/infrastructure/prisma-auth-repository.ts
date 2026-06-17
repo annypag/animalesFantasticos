@@ -11,6 +11,7 @@ export class PrismaAuthRepository implements AuthRepository {
       email: user.email,
       fullName: user.fullName,
       phone: user.phone,
+      createdAt: user.createdAt.toISOString(),
       passwordHash: user.passwordHash,
     };
   }
@@ -23,6 +24,7 @@ export class PrismaAuthRepository implements AuthRepository {
       email: user.email,
       fullName: user.fullName,
       phone: user.phone,
+      createdAt: user.createdAt.toISOString(),
     };
   }
 
@@ -41,6 +43,7 @@ export class PrismaAuthRepository implements AuthRepository {
       email: user.email,
       fullName: user.fullName,
       phone: user.phone,
+      createdAt: user.createdAt.toISOString(),
     };
   }
 
@@ -58,6 +61,7 @@ export class PrismaAuthRepository implements AuthRepository {
       email: user.email,
       fullName: user.fullName,
       phone: user.phone,
+      createdAt: user.createdAt.toISOString(),
     };
   }
 

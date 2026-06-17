@@ -100,7 +100,16 @@ export function RegistroForm({
             type="tel"
             placeholder="+54 11 1234-5678"
             value={phone}
-            onChange={(e) => onPhoneChange(e.target.value)}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              // Regex: Solo permite números (0-9), el signo + y espacios.
+              const sanitizedValue = inputValue.replace(/[^0-9+\s]/g, "");
+              
+              // Validación de longitud a nivel de estado
+              if (sanitizedValue.length <= 13) {
+                onPhoneChange(sanitizedValue);
+              }
+            }}
             className="h-14 w-full rounded-2xl border-2 border-border bg-white pl-12 text-base focus:border-primary focus:outline-none"
           />
         </div>

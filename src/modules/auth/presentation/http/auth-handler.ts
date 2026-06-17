@@ -162,6 +162,7 @@ export async function handleUpdateMe(request: Request) {
         email: true,
         fullName: true,
         phone: true,
+        createdAt: true,
       },
     });
 
