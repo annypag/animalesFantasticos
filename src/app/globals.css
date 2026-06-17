@@ -294,6 +294,11 @@ a {
   text-decoration: none;
 }
 
+/* Ensure links with primary background have white text */
+a.bg-primary {
+  color: #ffffff !important;
+}
+
 button,
 input,
 select,
