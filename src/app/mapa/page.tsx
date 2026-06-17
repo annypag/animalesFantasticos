@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import 'leaflet/dist/leaflet.css'; // Mantenemos el import de Leaflet aquí como dicta AGENTS.md
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
 import { HomeScreen } from '@/features/home/pages/home-screen'; 
 
 export const metadata = {

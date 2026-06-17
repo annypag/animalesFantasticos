@@ -58,6 +58,18 @@ export function asStringArray(value: unknown): string[] {
     .filter((item) => item.length > 0);
 }
 
+export function asOptionalQueryNumber(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function asOptionalQueryDate(value: string | null): Date | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
 export function asDdMmYyyyToDate(value: unknown): Date | null {
   const text = asTrimmedString(value);
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);

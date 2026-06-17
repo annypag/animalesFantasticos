@@ -19,3 +19,16 @@ export type ApiChatMessage = {
   imageUrl: string | null;
   createdAt: string;
 };
+
+export type ApiInboxConversation = {
+  id: number;
+  petKind: PetReportKind;
+  petId: number;
+  petName: string;
+  petImageUrl: string;
+  peerName: string;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+};

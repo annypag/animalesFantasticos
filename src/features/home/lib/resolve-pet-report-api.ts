@@ -16,12 +16,9 @@ export async function resolvePetReport(uiPetId: string): Promise<void> {
     throw new Error("Solo podés cerrar publicaciones guardadas en la base de datos.");
   }
 
-  const response = await fetch("/api/reports/close", {
+  const base = petRef.petKind === "LOST" ? "/api/lost-pets" : "/api/found-pets";
+  const response = await fetch(`${base}/${petRef.petId}/resolve`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ petId: uiPetId }),
     cache: "no-store",
   });
 

@@ -143,14 +143,16 @@ export function PetDetailsModal({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+        <div className="w-full overflow-hidden bg-muted flex items-center justify-center">
           <Image
             src={pet.image}
             alt={pet.name}
-            fill
+            width={0}
+            height={0}
             sizes="(max-width: 1024px) 100vw, 900px"
             unoptimized
-            className="h-full w-full object-cover"
+            className="max-h-[60vh] w-full object-contain"
+            style={{ width: "100%", height: "auto" }}
           />
         </div>
 

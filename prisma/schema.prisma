@@ -45,7 +45,7 @@ model FoundPet {
   reportDate           DateTime          @default(now()) @map("report_date") @db.Timestamptz(6)
   createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   resolvedAt           DateTime?         @map("resolved_at") @db.Timestamptz(6)
-
+  embedding            Unsupported("vector(1024)")?
 
   @@map("found_pets")
 }

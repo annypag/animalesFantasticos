@@ -3,42 +3,30 @@ import { listFoundPets } from "@/modules/found-pets/application/use-cases/list-f
 import { registerFoundPet } from "@/modules/found-pets/application/use-cases/register-found-pet";
 import { validateRegisterFoundPetPayload } from "@/modules/found-pets/application/validators/register-found-pet";
 import { PrismaFoundPetsRepository } from "@/modules/found-pets/infrastructure/prisma-found-pets-repository";
+import { VectorSearchRepository } from "@/modules/matching/infrastructure/vector-search-repository";
 import { ValidationError } from "@/modules/shared/application/errors/validation-error";
+import { asOptionalQueryDate, asOptionalQueryNumber } from "@/modules/shared/application/validation/payload-parsers";
 import { ensureUserExists } from "@/lib/auth/ensure-user-exists";
 import { resolveFoundPetReport } from "@/modules/found-pets/application/use-cases/resolve-found-pet";
 
 const repository = new PrismaFoundPetsRepository();
-
-function asOptionalNumber(value: string | null): number | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-function asOptionalDate(value: string | null): Date | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
+const vectorRepo = new VectorSearchRepository();
 
 export async function handleGetFoundPets(request: Request) {
   try {
     const url = new URL(request.url);
+    const userId = asOptionalQueryNumber(url.searchParams.get("userId"));
     const pets = await listFoundPets(repository, {
       neighborhood: url.searchParams.get("neighborhood") ?? undefined,
       breed: url.searchParams.get("breed") ?? undefined,
-      fromDate: asOptionalDate(url.searchParams.get("fromDate")),
-      toDate: asOptionalDate(url.searchParams.get("toDate")),
-      minLat: asOptionalNumber(url.searchParams.get("minLat")),
-      maxLat: asOptionalNumber(url.searchParams.get("maxLat")),
-      minLng: asOptionalNumber(url.searchParams.get("minLng")),
-      maxLng: asOptionalNumber(url.searchParams.get("maxLng")),
+      fromDate: asOptionalQueryDate(url.searchParams.get("fromDate")),
+      toDate: asOptionalQueryDate(url.searchParams.get("toDate")),
+      minLat: asOptionalQueryNumber(url.searchParams.get("minLat")),
+      maxLat: asOptionalQueryNumber(url.searchParams.get("maxLat")),
+      minLng: asOptionalQueryNumber(url.searchParams.get("minLng")),
+      maxLng: asOptionalQueryNumber(url.searchParams.get("maxLng")),
+      userId,
+      includeResolved: url.searchParams.get("includeResolved") === "true" && userId !== undefined,
     });
 
     return NextResponse.json({ pets }, { status: 200 });
@@ -66,7 +54,7 @@ export async function handlePostFoundPets(request: Request) {
 
     const body = (await request.json()) as unknown;
     const input = validateRegisterFoundPetPayload(body, userId);
-    const pet = await registerFoundPet(repository, input);
+    const pet = await registerFoundPet(repository, input, vectorRepo);
 
     return NextResponse.json({ pet }, { status: 201 });
   } catch (error) {

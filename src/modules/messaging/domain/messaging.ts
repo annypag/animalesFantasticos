@@ -31,3 +31,16 @@ export type SendMessageInput = {
   body: string | null;
   imageUrl: string | null;
 };
+
+export type InboxConversation = {
+  id: number;
+  petKind: PetReportKind;
+  petId: number;
+  petName: string;
+  petImageUrl: string;
+  peerName: string;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+};

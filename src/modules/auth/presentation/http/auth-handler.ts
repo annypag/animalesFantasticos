@@ -105,6 +105,7 @@ export async function handleGetMe(request: Request) {
         email: true,
         fullName: true,
         phone: true,
+        createdAt: true,
       },
     });
 

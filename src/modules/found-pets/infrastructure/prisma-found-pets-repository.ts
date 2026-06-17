@@ -80,7 +80,8 @@ export class PrismaFoundPetsRepository implements FoundPetsRepository {
   async listFoundPets(filters?: FoundPetFilters): Promise<FoundPet[]> {
     const pets = await prisma.foundPet.findMany({
       where: {
-        resolvedAt: null,
+        ...(filters?.includeResolved ? {} : { resolvedAt: null }),
+        ...(filters?.userId !== undefined ? { userId: BigInt(filters.userId) } : {}),
         ...(filters?.neighborhood
           ? {
               neighborhood: {

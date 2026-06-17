@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ValidationError } from "@/modules/shared/application/errors/validation-error";
 import { getOrCreateConversation } from "@/modules/messaging/application/use-cases/get-or-create-conversation";
+import { listConversationsForUser } from "@/modules/messaging/application/use-cases/list-conversations-for-user";
 import { listMessages } from "@/modules/messaging/application/use-cases/list-messages";
 import { sendMessage } from "@/modules/messaging/application/use-cases/send-message";
 import { userCanAccessConversation } from "@/modules/messaging/application/ensure-conversation-access";
@@ -23,6 +24,28 @@ import { handlePostImageUpload } from "@/modules/shared/presentation/http/image-
 
 const repository = new PrismaMessagingRepository();
 const notificationsRepository = new PrismaNotificationsRepository();
+
+export async function handleGetConversations(request: Request) {
+  try {
+    const userId = await getUserIdFromRequest(request);
+
+    if (!userId) {
+      return NextResponse.json(
+        { message: "Debés iniciar sesión para ver tus conversaciones." },
+        { status: 401 },
+      );
+    }
+
+    const conversations = await listConversationsForUser(repository, userId);
+    return NextResponse.json({ conversations }, { status: 200 });
+  } catch (error) {
+    console.error("GET /api/conversations failed", error);
+    return NextResponse.json(
+      { message: "No se pudieron cargar las conversaciones." },
+      { status: 500 },
+    );
+  }
+}
 
 export async function handlePostConversation(request: Request) {
   try {

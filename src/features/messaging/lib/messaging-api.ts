@@ -1,6 +1,7 @@
 import type {
   ApiChatMessage,
   ApiConversation,
+  ApiInboxConversation,
   PetReportKind,
 } from "@/features/messaging/types";
 
@@ -81,6 +82,17 @@ export async function sendChatMessage(params: {
 
   const payload = (await response.json()) as { message: ApiChatMessage };
   return payload.message;
+}
+
+export async function fetchMyConversations(): Promise<ApiInboxConversation[]> {
+  const response = await fetch("/api/conversations", { cache: "no-store" });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  const payload = (await response.json()) as { conversations: ApiInboxConversation[] };
+  return payload.conversations;
 }
 
 export async function uploadChatImage(file: File): Promise<string> {

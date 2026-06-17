@@ -52,7 +52,7 @@ export function NotificationsBell({ enabled }: NotificationsBellProps) {
     const petUiId = notificationToPetUiId(notification);
     const peerName = encodeURIComponent(notification.senderName);
     router.push(
-      `/?openPet=${encodeURIComponent(petUiId)}&openChat=${notification.conversationId}&peerName=${peerName}`,
+      `/mapa?openPet=${encodeURIComponent(petUiId)}&openChat=${notification.conversationId}&peerName=${peerName}`,
     );
   }
 

@@ -7,15 +7,19 @@ import { PetDetailsModal } from "@/features/home/components/pet-details-modal";
 import { PetsMap } from "@/features/home/components/pets-map";
 import { ReportPetModal } from "@/features/report/components/report-pet-modal";
 import { SelectedReportPetModal } from "@/features/home/components/selected-report-pet-modal";
+import { LoginRequiredModal } from "@/features/home/components/login-required-modal";
 import { Pet } from "@/features/home/types";
 import type { ReportType } from "@/features/report/types/types";
 import { ViewPetsListButton } from "../components/view-pets-list-button";
+import { VisualSearchWidget } from "@/features/matching/components/visual-search-widget";
 import { useRouter } from "next/navigation";
 import { usePetsSearch } from "../hooks/use-pets-search";
+import { useAuth } from "@/contexts/auth-context";
 
 export function HomeScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportType, setReportType] = useState<ReportType>("found");
@@ -28,6 +32,7 @@ export function HomeScreen() {
   const [chatConversationId, setChatConversationId] = useState<number | null>(null);
   const [chatPeerName, setChatPeerName] = useState<string | null>(null);
   const [selectionModalOpen, setSelectionModalOpen] = useState(false);
+  const [loginRequiredOpen, setLoginRequiredOpen] = useState(false);
   const {
     filteredPets,
     filters,
@@ -67,7 +72,7 @@ export function HomeScreen() {
         : null,
     );
     setChatPeerName(peerNameParam ? decodeURIComponent(peerNameParam) : null);
-    router.replace("/", { scroll: false });
+    router.replace("/mapa", { scroll: false });
   }, [filteredPets, loadingDbPets, router, searchParams]);
 
   useEffect(() => {
@@ -92,6 +97,10 @@ export function HomeScreen() {
   };
 
   const handleMapClick = (coordinates: [number, number]) => {
+    if (!user) {
+      setLoginRequiredOpen(true);
+      return;
+    }
     setReportLocation(coordinates);
     setSelectionModalOpen(true);
   };
@@ -155,8 +164,14 @@ export function HomeScreen() {
             petCount={filteredPets.length}
             onClick={handleViewList}
           />
+          <VisualSearchWidget />
         </div>
       </div>
+
+      <LoginRequiredModal
+        open={loginRequiredOpen}
+        onClose={() => setLoginRequiredOpen(false)}
+      />
 
       <SelectedReportPetModal
         open={selectionModalOpen}

@@ -68,7 +68,8 @@ export class PrismaLostPetsRepository implements LostPetsRepository {
   async listLostPets(filters?: LostPetFilters): Promise<LostPet[]> {
     const pets = await prisma.lostPet.findMany({
       where: {
-        resolvedAt: null,
+        ...(filters?.includeResolved ? {} : { resolvedAt: null }),
+        ...(filters?.userId !== undefined ? { userId: BigInt(filters.userId) } : {}),
         ...(filters?.neighborhood
           ? {
               locationText: {

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { mockPets } from "@/features/home/data/mock-pets";
 import { mapApiLostPetToUiPet, mapApiPetToUiPet } from "@/features/home/lib/pet-utils";
 import type { ApiFoundPet, ApiLostPet, FiltersState, Pet } from "@/features/home/types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -269,7 +268,7 @@ export function usePetsSearch() {
   );
 
   const pets = useMemo(() => {
-    return [...dbPets, ...mockPets];
+    return dbPets;
   }, [dbPets]);
 
   const filteredPets = useMemo(() => {

@@ -9,9 +9,16 @@
     "lint": "eslint",
     "db:up": "docker compose up -d postgres pgadmin",
     "db:down": "docker compose down",
-    "db:logs": "docker compose logs -f postgres pgadmin"
+    "db:logs": "docker compose logs -f postgres pgadmin",
+    "db:seed": "prisma db seed",
+    "db:backfill": "npx tsx prisma/backfill-embeddings.ts"
+  },
+  "prisma": {
+    "seed": "node --env-file=.env.local prisma/seed.js"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
+    "@imgly/background-removal-node": "^1.4.5",
     "@prisma/client": "^6.16.2",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
@@ -21,7 +28,8 @@
     "next": "16.2.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-leaflet": "^5.0.0"
+    "react-leaflet": "^5.0.0",
+    "react-leaflet-cluster": "^4.1.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

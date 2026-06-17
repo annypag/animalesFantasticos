@@ -6,7 +6,8 @@ Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, b
 - Boton Reportar Perdida para abrir el mismo formulario.
 - Guardar mascota + persona responsable en base de datos.
 - Ver lo guardado en la lista lateral y como pin en el mapa.
-- Chat básico con envío de imágenes en reportes de DB (base para extender mensajería; ver `src/features/messaging/README.md`).
+- Chat con envío de imágenes en reportes de DB, con polling, notificaciones y posibilidad de marcar el caso como resuelto (ver `src/features/messaging/README.md`).
+- **Búsqueda visual por imagen**: subís una foto de tu mascota y la IA encuentra coincidencias entre los reportes de mascotas encontradas usando embeddings multimodales (Voyage AI).
 
 ## Diagrama MVP
 
@@ -16,7 +17,8 @@ Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, b
 
 - Node.js 20+ (recomendado 22 LTS).
 - npm 10+.
-- Docker Desktop (para PostgreSQL y pgAdmin local).
+- Docker Desktop (para PostgreSQL con pgvector y pgAdmin local).
+- Clave de API de Voyage AI (`VOYAGE_API_KEY`) para la búsqueda visual por imagen — pedila al equipo.
 
 ## Instalacion desde cero
 
@@ -50,7 +52,18 @@ Valores por defecto (ya vienen listos para Docker local):
 DATABASE_URL=postgres://postgres:postgres@localhost:5433/animales_fantasticos
 ```
 
+Agregar también la clave de Voyage AI para el comparador de imágenes:
+
+```bash
+VOYAGE_API_KEY=<pedila al equipo>
+```
+
 ### 3) Levantar base de datos local
+
+> **Importante:** el proyecto usa `pgvector/pgvector:pg17` en lugar de `postgres:17-alpine` para soportar búsqueda vectorial. Si tenías un contenedor previo con la imagen vieja, tiralo primero:
+> ```bash
+> npm run db:down
+> ```
 
 ```bash
 npm run db:up
@@ -62,14 +75,31 @@ Opcional para logs:
 npm run db:logs
 ```
 
-### 4) Generar cliente Prisma y sincronizar esquema
+### 4) Sincronizar esquema y regenerar cliente Prisma
 
 ```bash
-npx prisma generate
 npx prisma db push
+npx prisma generate
 ```
 
-### 5) Levantar la app
+### 5) Cargar datos de prueba (opcional pero recomendado)
+
+Crea 3 usuarios con mascotas encontradas y perdidas de muestra. Contraseña de todos: `seed1234`.
+
+```bash
+npm run db:seed
+```
+
+> **Tarda ~4-5 minutos.** Por cada mascota encontrada, el seed le remueve el fondo a la foto y genera un embedding real contra Voyage AI (free tier = 3 requests/minuto, por eso espera ~21s entre cada una). No lo interrumpas. Si no configuraste `VOYAGE_API_KEY`, el seed igual carga los datos pero sin embeddings (la búsqueda visual no va a encontrar esas mascotas hasta correr `npm run db:backfill` con la key configurada).
+>
+> La primera vez que corre, descarga un modelo ONNX (~100MB) para la remoción de fondo — es normal que tarde más en esa primera corrida.
+
+Usuarios disponibles tras el seed:
+- `sofia@animalesfantasticos.local`
+- `martin@animalesfantasticos.local`
+- `lucia@animalesfantasticos.local`
+
+### 6) Levantar la app
 
 ```bash
 npm run dev
@@ -77,7 +107,9 @@ npm run dev
 
 Abrir http://localhost:3000
 
-### 6) Apagar servicios cuando termines
+> La primera vez que uses el botón "Buscar mi mascota" (búsqueda visual), el navegador descarga su propio modelo ONNX (~100MB, paquete `@imgly/background-removal`) para remover el fondo de la foto antes de buscarla. Queda cacheado en el browser para las próximas veces.
+
+### 7) Apagar servicios cuando termines
 
 ```bash
 npm run db:down
@@ -453,6 +485,8 @@ Esta seccion es para cualquier agente (Codex/Claude/otros) que vaya a implementa
 - `npm run db:up`: levantar postgres + pgAdmin con Docker.
 - `npm run db:down`: bajar contenedores.
 - `npm run db:logs`: ver logs de contenedores.
+- `npm run db:seed`: carga usuarios + mascotas de prueba y genera sus embeddings (requiere `VOYAGE_API_KEY`, tarda varios minutos).
+- `npm run db:backfill`: regenera embeddings para mascotas encontradas que ya existen en la DB (útil si cambiás el formato del embedding o agregaste `VOYAGE_API_KEY` después del seed).
 
 ## Stack
 
