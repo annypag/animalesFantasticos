@@ -72,17 +72,16 @@ export function ProfileScreen() {
     );
   }
 
-  // Nota: Si el backend luego envía la fecha de creación, la extraemos. 
-  // Por ahora la interfaz AuthUser no lo tiene fuertemente tipado.
-  const memberSince = (user as any).createdAt 
-    ? new Date((user as any).createdAt).toLocaleDateString("es-AR", {
+  // Formateamos la fecha de creación del usuario
+  const memberSince = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("es-AR", {
         year: "numeric",
         month: "long",
       })
     : "Fecha no disponible";
  
   return (
-   <div className="w-full max-w-5xl mx-auto bg-background px-4 py-4 md:px-8 lg:py-10  ">
+   <div className="w-full max-w-6xl mx-auto bg-background px-4 py-4 md:px-8 lg:py-10  ">
     
       {/* Encabezado de la página */}
       <div className="mb-10 py-4 ">
@@ -93,7 +92,7 @@ export function ProfileScreen() {
       </div>
 
       {/* 2. CAMBIO CLAVE: Usamos grid-cols-4 en pantallas grandes para darle más proporción a la derecha */}
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-16 space-y-3 ">
+      <div className="w-full grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-11 space-y-3 ">
         
         {/* Columna Izquierda: Información del Usuario (Ocupa exactamente 1 columna de 4) */}
         {/* Se agregó 'relative' a este div para poder posicionar el botón de editar */}

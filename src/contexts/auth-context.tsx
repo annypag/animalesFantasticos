@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   phone?: string | null;
+  createdAt?: string;
 }
 
 interface AuthContextValue {
