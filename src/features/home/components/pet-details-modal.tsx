@@ -71,11 +71,37 @@ export function PetDetailsModal({
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
+  // Función para cerrar todo de forma limpia
+  const handleClose = () => {
+      console.log("CERRANDO PET DETAILS MODAL");
+    setChatModalOpen(false);
+    setResolveError(null);
+    onClose();
+  };
+
   useEffect(() => {
     if (open && openChatOnMount && chatConversationId && !pet?.resolvedAt) {
       setChatModalOpen(true);
     }
   }, [open, openChatOnMount, chatConversationId, pet?.resolvedAt]);
+
+useEffect(() => {
+  if (!open) return;
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      handleClose();
+    }
+  }
+
+  document.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    document.removeEventListener("keydown", handleKeyDown);
+  };
+}, [open]);
 
   if (!open || !pet) {
     return null;
@@ -100,12 +126,7 @@ export function PetDetailsModal({
     ? "bg-[var(--alert-orange)] hover:bg-[var(--alert-orange)]/90"
     : "bg-primary hover:bg-primary/90";
 
-  // Función para cerrar todo de forma limpia
-  const handleClose = () => {
-    setChatModalOpen(false);
-    setResolveError(null);
-    onClose();
-  };
+
 
   async function handleResolve() {
     if (!pet) {
@@ -133,13 +154,13 @@ export function PetDetailsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-black/50 p-4" onClick={handleClose}>
+      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
           onClick={handleClose}
-          className="absolute right-4 top-4 z-10 rounded-full bg-white/90 p-2 backdrop-blur-sm transition-colors hover:bg-white"
-        >
+className="sticky top-4 float-right mr-4 z-50 -mb-10 rounded-full bg-white/90 p-2 backdrop-blur-sm transition-colors hover:bg-white"
+          >
           <X className="h-5 w-5" />
         </button>
 

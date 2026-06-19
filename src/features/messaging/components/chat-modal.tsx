@@ -117,18 +117,13 @@ export function ChatModal({
           <p className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
             {CHAT_CLOSED_RESOLVED_MESSAGE}
           </p>
-        ) : !canOpenChat && !conversationId ? (
-          <p className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
-            El chat solo está disponible en publicaciones guardadas en la base de
-            datos.
-          </p>
         ) : authLoading ? (
           <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : !senderName ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
-            <p>Iniciá sesión para chatear sobre esta publicación.</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm">
+            <p className="text-muted-foreground">Para chatear sobre una publicación debe iniciar sesión.</p>
             <Link
               href={loginHref}
               className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
@@ -136,6 +131,11 @@ export function ChatModal({
               Iniciar sesión
             </Link>
           </div>
+        ) : !canOpenChat && !conversationId ? (
+          <p className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
+            El chat solo está disponible en publicaciones guardadas en la base de
+            datos.
+          </p>
         ) : (
           <>
             {error && (
