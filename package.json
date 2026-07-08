@@ -11,7 +11,10 @@
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres pgadmin",
     "db:seed": "prisma db seed",
-    "db:backfill": "npx tsx prisma/backfill-embeddings.ts"
+    "db:backfill": "npx tsx prisma/backfill-embeddings.ts",
+    "postinstall": "prisma generate",
+    "db:enable-vector": "node prisma/enable-vector.js",
+    "db:setup-neon": "npm run db:enable-vector && npx prisma db push && npx prisma generate"
   },
   "prisma": {
     "seed": "node --env-file=.env.local prisma/seed.js"
@@ -20,6 +23,7 @@
     "@imgly/background-removal": "^1.7.0",
     "@imgly/background-removal-node": "^1.4.5",
     "@prisma/client": "^6.16.2",
+    "@vercel/blob": "^2.6.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "leaflet": "^1.9.4",
