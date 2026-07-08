@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           BigInt     @id @default(autoincrement()) @db.BigInt
+  fullName     String     @map("full_name")
+  email        String     @unique // ¡Importante para el login!
+  phone        String?
+  passwordHash String?    @map("password_hash")
+  googleId     String?    @unique @map("google_id")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  foundPets              FoundPet[]
+  lostPets               LostPet[]
+  notifications          Notification[]
+  chatConversations      Conversation[] @relation("ConversationParticipant")
+
+  @@map("users")
+}
+
+model FoundPet {
+  id                   BigInt            @id @default(autoincrement()) @db.BigInt
+  userId                 BigInt            @map("user_id") @db.BigInt // Cambiado de owner_id a user_id
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  sex                  PetSex            @default(UNKNOWN)
+  species              String
+  breed                String
+  imageUrl             String            @map("image_url")
+  imageUrls            Json              @default("[]") @map("image_urls")
+  description          String
+  locationText         String            @map("location_text")
+  neighborhood         String            @default("Sin barrio")
+  latitude             Float
+  longitude            Float
+  foundAt              DateTime          @default(now()) @map("found_at") @db.Timestamptz(6)
+  reportDate           DateTime          @default(now()) @map("report_date") @db.Timestamptz(6)
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt           DateTime?         @map("resolved_at") @db.Timestamptz(6)
+  embedding            Unsupported("vector(1024)")?
+
+  @@map("found_pets")
+}
+
+model LostPet {
+  id           BigInt   @id @default(autoincrement()) @db.BigInt
+  userId       BigInt   @map("user_id") @db.BigInt // Cambiado de owner_id a user_id
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  sex          PetSex   @default(UNKNOWN)
+  species      String
+  breed        String
+  imageUrl     String   @map("image_url")
+  description  String
+  locationText String   @map("location_text")
+  latitude     Float
+  longitude    Float
+  lastSeen     String   @map("last_seen")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)], map: "lost_pets_created_at_idx")
+  @@map("lost_pets")
+}
+
+
+enum PetReportKind {
+  FOUND
+  LOST
+}
+enum PetSex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+
+
+model Conversation {
+  id                  BigInt        @id @default(autoincrement()) @db.BigInt
+  petKind             PetReportKind @map("pet_kind")
+  petId               BigInt        @map("pet_id") @db.BigInt
+  participantUserId   BigInt        @map("participant_user_id") @db.BigInt
+  participantUser     User          @relation("ConversationParticipant", fields: [participantUserId], references: [id], onDelete: Cascade)
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  messages            Message[]
+
+  @@unique([petKind, petId, participantUserId], map: "conversations_pet_participant_uid")
+  @@map("conversations")
+}
+
+model Message {
+  id             BigInt       @id @default(autoincrement()) @db.BigInt
+  conversationId BigInt       @map("conversation_id") @db.BigInt
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderUserId   BigInt       @map("sender_user_id") @db.BigInt
+  senderName     String       @default("Usuario") @map("sender_name")
+  body           String?
+  imageUrl       String?      @map("image_url")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([conversationId, createdAt(sort: Asc)], map: "messages_conversation_created_idx")
+  @@map("messages")
+}
+
+model Notification {
+  id             BigInt        @id @default(autoincrement()) @db.BigInt
+  userId         BigInt        @map("user_id") @db.BigInt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId BigInt        @map("conversation_id") @db.BigInt
+  senderUserId   BigInt        @map("sender_user_id") @db.BigInt
+  petKind        PetReportKind @map("pet_kind")
+  petId          BigInt        @map("pet_id") @db.BigInt
+  petName        String        @map("pet_name")
+  senderName     String        @map("sender_name")
+  messagePreview String        @map("message_preview")
+  unreadCount    Int           @default(1) @map("unread_count")
+  readAt         DateTime?     @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, conversationId], map: "notifications_user_conversation_uid")
+  @@index([userId, readAt, updatedAt(sort: Desc)], map: "notifications_user_read_updated_idx")
+  @@map("notifications")
+}
+
+enum MatchJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+model MatchJob {
+  id        BigInt         @id @default(autoincrement()) @db.BigInt
+  petKind   PetReportKind  @map("pet_kind")
+  petId     BigInt         @map("pet_id") @db.BigInt
+  status    MatchJobStatus @default(PENDING)
+  attempts  Int            @default(0)
+  lastError String?        @map("last_error")
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("match_jobs")
+}
+
+model PetMatch {
+  lostPetId   BigInt   @map("lost_pet_id") @db.BigInt
+  foundPetId  BigInt   @map("found_pet_id") @db.BigInt
+  score       Float
+  explanation String?
+  computedAt  DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@id([lostPetId, foundPetId])
+  @@map("pet_matches")
+}

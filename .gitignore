@@ -33,9 +33,25 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# prisma generated client
+src/generated/prisma/
+
+# uploaded images (keep folders via .gitkeep)
+/public/uploads/chat/*
+!/public/uploads/chat/.gitkeep
+/public/uploads/reports/*
+!/public/uploads/reports/.gitkeep
+/public/assets/chat/*
+!/public/assets/chat/.gitkeep
+/public/assets/reports/*
+!/public/assets/reports/.gitkeep
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code local settings
+.claude/settings.local.json
