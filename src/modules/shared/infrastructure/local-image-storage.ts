@@ -88,7 +88,8 @@ export async function saveLocalImage(
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
       const { put } = await import("@vercel/blob");
-      const blob = await put(`assets/${folder}/${fileName}`, file, {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const blob = await put(`assets/${folder}/${fileName}`, buffer, {
         access: "public",
         contentType: file.type,
       });
