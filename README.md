@@ -1,4 +1,45 @@
-Proyecto Next.js para reportar mascotas encontradas/perdidas con mapa Leaflet, backend en App Router y persistencia en PostgreSQL con Prisma.
+# 🐾 Proyecto: Animales Fantásticos (Equipo 5)
+
+## 📋 Resumen del Proyecto
+
+**Animales Fantásticos** es una plataforma web diseñada para centralizar el reporte de mascotas perdidas y encontradas. A diferencia de los grupos de redes sociales, utiliza **geolocalización avanzada (Leaflet)** y **búsqueda visual con Inteligencia Artificial (Voyage AI)** para permitir búsquedas precisas, emparejamientos inteligentes y filtros dinámicos.
+
+---
+
+## 🚀 Definición del MVP (Producto Mínimo Viable)
+
+1. **Reporte Rápido:** Un usuario encuentra o pierde una mascota y la publica rápidamente con geolocalización.
+2. **Visualización Geográfica:** Mapa interactivo con pines de animales reportados (Leaflet).
+3. **Filtros de Búsqueda:** Filtrado por especie (Perro/Gato/Otro) y barrio.
+4. **Búsqueda Visual por IA:** Comparación automática de fotos mediante embeddings multimodales (Voyage AI) para matchear mascotas perdidas y encontradas.
+5. **Mensajería Integrada:** Chat en tiempo real con soporte de imágenes y notificaciones para conectar rescatistas y dueños.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+* **Core Framework:** Next.js 16.2.2 (App Router) + React 19 + TypeScript
+* **Estilos (CSS):** Tailwind CSS v4 (con variables alineadas en `globals.css`)
+* **Base de Datos:** PostgreSQL con extensión **pgvector** (para búsqueda vectorial)
+* **ORM:** Prisma
+* **Servicios & APIs:** Voyage AI (embeddings multimodales), Leaflet & Nominatim (mapas y geocodificación inversa), Vercel Blob / Cloudinary (almacenamiento de imágenes).
+
+---
+
+## 👥 Equipo (AnimalesFantásticos)
+
+- Agus - A.Reybrienza@gmail.com
+- Valen - valenfucce@gmail.com
+- Fabri - fsignorello@estudiantes.unsam.edu.ar
+- Emi - ejnunez@estudiantes.unsam.edu.ar
+- Ale - amenini@estudiantes.unsam.edu.ar
+- Maxi - maxifborrelli@gmail.com
+- Anny - anny.pagano99@gmail.com
+
+---
+
+Este es un proyecto [Next.js](https://nextjs.org) inicializado con [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
 
 ## Que se puede hacer hoy
 
@@ -495,3 +536,6 @@ Esta seccion es para cualquier agente (Codex/Claude/otros) que vaya a implementa
 - Leaflet / React-Leaflet
 - PostgreSQL + Prisma ORM
 - Docker Compose (PostgreSQL local)
+
+Para más detalles sobre el deployment, consulta la [documentación de despliegue de Next.js](https://nextjs.org/docs/app/building-your-application/deploying).
+
